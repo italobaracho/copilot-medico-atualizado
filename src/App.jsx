@@ -1,9 +1,8 @@
-// src/App.jsx
 import { useState } from 'react';
-// Ajustamos o caminho aqui para apontar para a pasta que você criou!
-import Sidebar from './components/Sidebar'; 
+import Sidebar from './components/Sidebar';
+import PacienteView from './components/PacienteView'; 
 
-function App() { // Mudamos o nome para 'App' para o Vite reconhecer como a tela principal
+function App() {
   const [currentView, setCurrentView] = useState('pacientes');
 
   return (
@@ -11,11 +10,16 @@ function App() { // Mudamos o nome para 'App' para o Vite reconhecer como a tela
       {/* O menu lateral fixo */}
       <Sidebar currentView={currentView} onViewChange={setCurrentView} />
 
-      {/* Conteúdo Principal (Aba de Exames / Ficha do Paciente) */}
+      {/* Conteúdo Dinâmico com base no menu lateral */}
       <main style={{ marginLeft: '80px', flexGrow: 1, padding: '40px' }}>
-        {/* Aqui entra o Header Azul com os dados da Adnielle */}
-        {/* E aqui entram os cards de Atendimentos e Exames */}
-        <h1 style={{ color: '#1e3a8a', fontFamily: 'sans-serif' }}>Visualização de Exames</h1>
+        {currentView === 'pacientes' ? (
+          <PacienteView />
+        ) : (
+          <div style={{ fontFamily: 'sans-serif' }}>
+            <h1 style={{ color: '#1e3a8a' }}>Outra Tela</h1>
+            <p style={{ color: '#64748b' }}>Você clicou em uma aba que ainda está em desenvolvimento.</p>
+          </div>
+        )}
       </main>
     </div>
   );
