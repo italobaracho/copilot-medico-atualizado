@@ -3,10 +3,8 @@ import os
 import json
 import uuid
 from datetime import datetime
-from backend.user_db import get_user
 
-
-from flask import Flask, request, jsonify
+from flask import Flask, g, request, jsonify
 from flask_cors import CORS
 import tempfile
 import speech_recognition as sr
@@ -15,6 +13,19 @@ import speech_recognition as sr
 from backend import gemini_connection
 from backend import pdf_reader
 from backend import text_filter
+from backend.auth_decorators import roles_required, token_required
+from backend.auth_service import (
+    AuthError,
+    authenticate_user,
+    create_access_token,
+    get_profile_details,
+    is_valid_email,
+    normalize_email,
+    normalize_profile,
+    normalize_profiles,
+    sanitize_user,
+)
+from backend.config import settings
 
 # Importa TODAS as funções do seu patient_db.py
 from backend.patient_db import (
@@ -26,8 +37,22 @@ from backend.patient_db import (
     )
 from backend.processador_voz.processador_voz import TranscritorVoz
 from backend.audio_service import Diarizador
+
+
+def get_cors_origins():
+    configured_origins = settings.cors_origins.strip()
+    if not configured_origins or configured_origins == "*":
+        return "*"
+    return [origin.strip() for origin in configured_origins.split(",") if origin.strip()]
+
+
 app = Flask(__name__)
-CORS(app)
+CORS(
+    app,
+    resources={r"/api/*": {"origins": get_cors_origins()}},
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+)
 
 audio_processor = None
 
@@ -56,7 +81,100 @@ except Exception as e:
     audio_processor = None
 
 
+def _json_error(message, status_code):
+    return jsonify({"status": "error", "message": message}), status_code
+
+
+def _auth_success_response(user, profile, token, expires_in):
+    return jsonify({
+        "status": "success",
+        "token": token,
+        "token_type": "Bearer",
+        "expires_in": expires_in,
+        "user": sanitize_user(user),
+        "profile": get_profile_details(profile),
+        "available_profiles": [
+            get_profile_details(user_profile)
+            for user_profile in normalize_profiles(user.get("profiles"))
+        ],
+    }), 200
+
+
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return _json_error("Corpo JSON inválido.", 400)
+
+    email = normalize_email(data.get("email"))
+    password = data.get("password")
+
+    if not email or password is None:
+        return _json_error("Email e senha são obrigatórios.", 400)
+    if not is_valid_email(email):
+        return _json_error("Email inválido.", 400)
+    if not isinstance(password, str) or not password:
+        return _json_error("Senha obrigatória.", 400)
+
+    user = authenticate_user(email, password)
+    if not user:
+        return _json_error("Email ou senha inválidos", 401)
+
+    profiles = normalize_profiles(user.get("profiles"))
+    if not profiles:
+        return _json_error("Usuário sem perfil de acesso.", 403)
+
+    requested_profile = normalize_profile(data.get("profile"))
+    selected_profile = requested_profile if requested_profile else profiles[0]
+    if selected_profile not in profiles:
+        return _json_error("Perfil não permitido para este usuário.", 403)
+
+    try:
+        token, expires_in = create_access_token(user, selected_profile)
+    except AuthError as exc:
+        return _json_error(exc.message, exc.status_code)
+
+    return _auth_success_response(user, selected_profile, token, expires_in)
+
+
+@app.route('/api/auth/select-profile', methods=['POST'])
+@token_required
+def select_profile():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return _json_error("Corpo JSON inválido.", 400)
+
+    selected_profile = normalize_profile(data.get("profile"))
+    if not selected_profile:
+        return _json_error("Perfil é obrigatório.", 400)
+    if selected_profile not in normalize_profiles(g.current_user.get("profiles")):
+        return _json_error("Perfil não permitido para este usuário.", 403)
+
+    try:
+        token, expires_in = create_access_token(g.current_user, selected_profile)
+    except AuthError as exc:
+        return _json_error(exc.message, exc.status_code)
+
+    return _auth_success_response(g.current_user, selected_profile, token, expires_in)
+
+
+@app.route('/api/auth/me', methods=['GET'])
+@token_required
+def get_authenticated_user():
+    profile = getattr(g, "current_profile", "")
+    return jsonify({
+        "status": "success",
+        "user": getattr(g, "current_user_safe", {}),
+        "profile": get_profile_details(profile),
+        "available_profiles": [
+            get_profile_details(user_profile)
+            for user_profile in normalize_profiles(g.current_user.get("profiles"))
+        ],
+    }), 200
+
+
 @app.route('/api/transcribe_audio', methods=['POST'])
+@roles_required("administrador", "medico")
 def transcribe_audio_route():
     """
     Recebe áudio, faz Diarização (se disponível) ou Transcrição simples,
@@ -173,6 +291,7 @@ def transcribe_audio_route():
 
 # Rota para obter EXCLUSIVAMENTE o histórico de transcrições de áudio
 @app.route('/api/patients/<patient_id>/transcription-log', methods=['GET'])
+@roles_required("administrador", "medico")
 def get_transcription_log_api(patient_id):
     try:
         logs = get_patient_transcription_log(patient_id) # Função do seu patient_db
@@ -187,6 +306,7 @@ def get_transcription_log_api(patient_id):
 
 # NOVO ENDPOINT: Verificar existência do Patient ID
 @app.route('/api/patient-exists/<patient_id>', methods=['GET'])
+@roles_required("administrador", "medico", "recepcao")
 def check_patient_exists_api(patient_id):
     """
     Verifica se um paciente com o ID fornecido existe no banco de dados.
@@ -203,6 +323,7 @@ def check_patient_exists_api(patient_id):
 
 # NOVO ENDPOINT: Criar Paciente
 @app.route('/api/patients', methods=['POST'])
+@roles_required("administrador", "medico", "recepcao")
 def create_patient():
     """
     Cria um novo paciente e retorna seu ID e nome.
@@ -233,6 +354,7 @@ def create_patient():
 
 # Endpoint do Chat para usar o histórico da consulta selecionada
 @app.route('/api/chat', methods=['POST'])
+@roles_required("administrador", "medico")
 def handle_chat_message():
     try:
         data = request.json
@@ -294,6 +416,7 @@ def handle_chat_message():
 
 # Endpoint de Upload de PDF
 @app.route('/api/upload-pdf', methods=['POST'])
+@roles_required("administrador", "medico")
 def upload_pdf():
     try:
         if 'pdf' not in request.files:
@@ -356,6 +479,7 @@ def upload_pdf():
 
 ## Rota `/api/patients/<patient_id>/consultations` para gerenciar consultas
 @app.route('/api/patients/<patient_id>/consultations', methods=['GET', 'POST'])
+@roles_required("administrador", "medico", "recepcao")
 def handle_patient_consultations(patient_id):
     if request.method == 'POST':
         # Lógica para CRIAR uma nova consulta
@@ -421,6 +545,7 @@ def handle_patient_consultations(patient_id):
         
 # NOVO ENDPOINT: Obter Histórico de uma Consulta Específica
 @app.route('/api/patients/<patient_id>/consultations/<consultation_id>/history', methods=['GET'])
+@roles_required("administrador", "medico")
 def get_consultation_history_api(patient_id, consultation_id):
     """
     Retorna o histórico de chat de uma consulta específica.
@@ -437,6 +562,7 @@ def get_consultation_history_api(patient_id, consultation_id):
         return jsonify({"status": "error", "message": f"Erro ao recuperar histórico da consulta: {e}"}), 500
     
 @app.route('/api/all-patients', methods=['GET'])
+@roles_required("administrador", "medico", "recepcao")
 def get_all_patients():
     """
     Retorna uma lista de todos os pacientes (ID e Nome) para o frontend.
@@ -450,6 +576,7 @@ def get_all_patients():
         return jsonify({"status": "error", "message": f"Erro ao obter lista de pacientes: {e}"}), 500
 
 @app.route('/api/recommendations', methods=['POST'])
+@roles_required("administrador", "medico")
 def handle_recommendations():
     """
     Endpoint para solicitação de recomendações com base no andamento/histórico da consulta.
@@ -501,51 +628,8 @@ def handle_recommendations():
         return jsonify({"error": f"Erro interno do servidor: {str(e)}"}), 500
 
 
-@app.route('/api/login', methods=['POST'])
-def login():
-    data = request.get_json()
-
-    if not data:
-        return jsonify({
-            "status": "error",
-            "message": "Corpo da requisição vazio."
-        }), 400
-
-    email = data.get("email")
-    password = data.get("password")
-
-    if not email or not password:
-        return jsonify({
-            "status": "error",
-            "message": "Email e senha são obrigatórios."
-        }), 400
-
-    user = get_user(email)
-
-    if not user:
-        return jsonify({
-            "status": "error",
-            "message": "Usuário não encontrado."
-        }), 404
-
-    if user.get("password") != password:
-        return jsonify({
-            "status": "error",
-            "message": "Senha inválida."
-        }), 401
-
-    return jsonify({
-        "status": "success",
-        "message": "Login realizado com sucesso.",
-        "user": {
-            "name": user.get("name"),
-            "email": email,
-            "role": user.get("role")
-        }
-    }), 200
 
 if __name__ == '__main__':
-
     print("Servidor Flask com Gemini e DB de Paciente iniciado.")
     
     # GARANTA que a função add_consultation_to_patient no patient_db.py tem a assinatura:
@@ -624,9 +708,4 @@ if __name__ == '__main__':
     )
     # --- FIM DA PRÉ-POPULAÇÃO DE DADOS CORRIGIDA ---
 
-
-
     app.run(host='0.0.0.0', port=3001, debug=True)
-
-
-    
