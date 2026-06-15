@@ -4,11 +4,12 @@ import {
   FlaskConical, FileText, Download, ChevronRight, Play 
 } from 'lucide-react';
 
-export default function PacientesView({ pacientes }) {
+export default function PacientesView({ pacientes, onDeletePaciente }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [activeTab, setActiveTab] = useState('atendimentos');
   const [viewedExam, setViewedExam] = useState(null); // Estado para o modal do exame
+  const [showDetailsMenu, setShowDetailsMenu] = useState(false);
 
   // Filtra os pacientes pela barra de busca
   const filteredPatients = pacientes.filter(p => 
@@ -53,9 +54,9 @@ export default function PacientesView({ pacientes }) {
       {/* Caminho / Breadcrumb + Botão Voltar */}
       <div style={styles.breadcrumbRow}>
         <span style={styles.breadcrumb}>Home &gt; Pacientes &gt; <span style={{color: '#1e293b'}}>Paciente {selectedPatient.cpf}</span></span>
-        <button style={styles.backButton} onClick={() => { setSelectedPatient(null); setViewedExam(null); }}>
-          <ArrowLeft size={16} /> Voltar
-        </button>
+        <button style={styles.backButton} onClick={() => { setSelectedPatient(null); setViewedExam(null); setShowDetailsMenu(false); }}>
+  <ArrowLeft size={16} /> Voltar
+</button>
       </div>
 
       {/* Cartão Azul de Perfil */}
@@ -82,7 +83,30 @@ export default function PacientesView({ pacientes }) {
             <p style={styles.labelValue}>{selectedPatient.sexo}</p>
           </div>
         </div>
-        <button style={styles.detailsBtn}>Detalhes</button>
+        <div style={{ position: 'relative' }}>
+  <button 
+    style={styles.detailsBtn} 
+    onClick={() => setShowDetailsMenu(!showDetailsMenu)}
+  >
+    Detalhes
+  </button>
+
+  {/* Menu Dropdown que aparece ao clicar */}
+  {showDetailsMenu && (
+    <div style={styles.dropdownMenu}>
+      <button 
+        style={styles.deleteBtn} 
+        onClick={() => {
+          onDeletePaciente(selectedPatient.id); // Deleta do estado global
+          setSelectedPatient(null);             // Fecha o prontuário e volta para a busca
+          setShowDetailsMenu(false);            // Fecha o menu
+        }}
+      >
+        ❌ Deletar Paciente
+      </button>
+    </div>
+  )}
+</div>
       </div>
 
       {/* Abas de Navegação internas */}
@@ -249,5 +273,32 @@ const styles = {
   modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
   modalTitle: { margin: 0, fontSize: '18px', color: '#1e3a8a' },
   closeModalBtn: { background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#94a3b8' },
-  resultBox: { backgroundColor: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }
+  resultBox: { backgroundColor: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' },
+
+  dropdownMenu: {
+    position: 'absolute',
+    top: '115%',
+    right: 0,
+    backgroundColor: '#ffffff',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    zIndex: 10,
+    padding: '6px',
+    minWidth: '150px',
+  },
+  deleteBtn: {
+    width: '100%',
+    textAlign: 'left',
+    background: 'none',
+    border: 'none',
+    padding: '8px 12px',
+    color: '#ef4444', // Vermelho
+    fontSize: '13px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    borderRadius: '6px',
+    backgroundColor: 'transparent',
+    transition: 'background 0.2s',
+  },
 };

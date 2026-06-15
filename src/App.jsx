@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import Sidebar from './components/Sidebar';
-import PacienteView from './components/PacienteView';
+import PacienteView from './components/PacienteView'; // 👈 Deixamos com 's' combinando com o seu arquivo
 import CadastroView from './components/CadastroView'; 
 
-// Movemos os dados iniciais para cá
+// Dados iniciais simulados
 const DADOS_INICIAIS = [
   {
     id: '1',
@@ -18,11 +18,19 @@ const DADOS_INICIAIS = [
 
 function App() {
   const [currentView, setCurrentView] = useState('pacientes');
-  const [pacientes, setPacientes] = useState(DADOS_INICIAIS); // Estado global da lista
+  const [pacientes, setPacientes] = useState(DADOS_INICIAIS);
 
-  // Função para adicionar o novo paciente vindo do formulário
+  // Adiciona o novo paciente vindo do formulário
   const handleAddPaciente = (novoPaciente) => {
     setPacientes([novoPaciente, ...pacientes]);
+  };
+
+  // Deleta o paciente da lista global filtrando pelo ID
+  const handleDeletePaciente = (id) => {
+    const confirmar = window.confirm("Tem certeza que deseja remover este paciente do sistema?");
+    if (confirmar) {
+      setPacientes(pacientes.filter(p => p.id !== id));
+    }
   };
 
   return (
@@ -31,7 +39,10 @@ function App() {
 
       <main style={{ marginLeft: '80px', flexGrow: 1, padding: '40px' }}>
         {currentView === 'pacientes' && (
-          <PacienteView pacientes={pacientes} /> 
+          <PacienteView 
+            pacientes={pacientes} 
+            onDeletePaciente={handleDeletePaciente} 
+          /> 
         )}
 
         {currentView === 'cadastro' && (
