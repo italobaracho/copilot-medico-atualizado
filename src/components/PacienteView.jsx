@@ -4,37 +4,16 @@ import {
   FlaskConical, FileText, Download, ChevronRight, Play 
 } from 'lucide-react';
 
-// Dados simulados baseados na sua imagem
-const MOCK_PACIENTES = [
-  {
-    id: '1',
-    nome: 'ADNIELLE MARIA APARECIDA DA SILVA PEREIRA',
-    idade: '39 anos',
-    sexo: 'Feminino',
-    cpf: '000.000.000-00',
-    atendimentos: [
-      { id: 'a1', data: '30 MAR 2026', tipo: 'Consulta', especialidade: 'Cardiologista', medico: 'Dr. Ricardo Almeida', audio: 'audio_transcricao_30mar2026.mp3', tamanho: '2.4 MB' },
-      { id: 'a2', data: '12 JAN 2026', tipo: 'Consulta', especialidade: 'Cardiologista', medico: 'Dra. Juliana Martins', audio: 'audio_transcricao_12jan2026.mp3', tamanho: '1.8 MB' },
-      { id: 'a3', data: '08 DEZ 2025', tipo: 'Retorno', especialidade: 'Cardiologista', medico: 'Dr. Ricardo Almeida', audio: 'audio_transcricao_08dez2025.mp3', tamanho: '1.6 MB' }
-    ],
-    exames: [
-      { id: 'e1', data: '06 MAI 2025', nome: 'Ecocardiograma Transtorácico', categoria: 'Exames de Imagem', status: 'Concluído', horario: '14:07', resultado: 'Ritmo sinusal regular. Fração de ejeção de 65%. Valvas cardíacas com fluxo normal, sem sinais de estenose.' },
-      { id: 'e2', data: '18 FEV 2025', nome: 'Hemograma Completo', categoria: 'Exames Laboratoriais', status: 'Concluído', horario: '08:22', resultado: 'Hemácias: 4.5 milhões/µL (Normal). Hemoglobina: 13.2 g/dL. Leucócitos: 6.500/µL. Plaquetas estáveis.' },
-      { id: 'e3', data: '15 JAN 2025', nome: 'Colesterol Total e Frações', categoria: 'Exames Laboratoriais', status: 'Concluído', horario: '09:10', resultado: 'Colesterol Total: 180 mg/dL. HDL: 55 mg/dL. LDL: 105 mg/dL (Desejável abaixo de 130).' }
-    ]
-  }
-];
-
-export default function PacientesView() {
+export default function PacientesView({ pacientes }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [activeTab, setActiveTab] = useState('atendimentos');
   const [viewedExam, setViewedExam] = useState(null); // Estado para o modal do exame
 
   // Filtra os pacientes pela barra de busca
-  const filteredPatients = MOCK_PACIENTES.filter(p => 
-    p.nome.toLowerCase().includes(searchQuery.toLowerCase()) || p.cpf.includes(searchQuery)
-  );
+  const filteredPatients = pacientes.filter(p => 
+  p.nome.toLowerCase().includes(searchQuery.toLowerCase()) || p.cpf.includes(searchQuery)
+);
 
   // VISTA 1: Barra de Pesquisa de Pacientes
   if (!selectedPatient) {
@@ -222,7 +201,7 @@ const styles = {
   searchInput: { width: '100%', border: 'none', padding: '14px 0', fontSize: '15px', outline: 'none' },
   patientList: { display: 'flex', flexDirection: 'column', gap: '12px' },
   patientCard: { display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'all 0.2s' },
-  avatarCircle: { width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyCwontent: 'center', marginRight: '16px', display: 'flex', justifyContent: 'center' },
+  avatarCircle: { width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '16px', display: 'flex', justifyContent: 'center' },
   patientName: { margin: '0 0 4px 0', fontSize: '15px', fontWeight: 'bold', color: '#1e3a8a' },
   patientSub: { margin: 0, fontSize: '13px', color: '#64748b' },
   

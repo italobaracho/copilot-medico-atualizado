@@ -21,9 +21,13 @@ function Sidebar({ currentView, onViewChange }) {
     <aside style={styles.sidebar}>
       {/* Bloco Superior: Logo */}
       <div style={styles.logoContainer}>
-        <div style={styles.logoCircle}>
+        <button 
+          onClick={() => onViewChange('cadastro')} // O clique avisa o App.jsx para mudar de tela
+          style={{ ...styles.navButton, ...styles.logoCircle }} // Reaproveita os estilos visuais da bolinha azul
+          title="Cadastrar Novo Paciente"
+        >
           <span style={styles.logoPlus}>+</span>
-        </div>
+        </button>
       </div>
 
       {/* Bloco Central: Navegação */}
