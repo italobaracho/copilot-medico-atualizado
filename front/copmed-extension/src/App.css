@@ -340,3 +340,9 @@ tbody tr {
 .sidebar.collapsed .logo {
   justify-content: center;
 }
+
+.sem-resultados {
+  text-align: center;
+  color: #6b7280;
+  padding: 30px;
+}

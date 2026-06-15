@@ -19,6 +19,49 @@ import { BsClockHistory } from "react-icons/bs";
 
 function Pacientes() {
   const [menuFechado, setMenuFechado] = useState(false);
+  const [tipoBusca, setTipoBusca] = useState("CPF");
+  const [termoBusca, setTermoBusca] = useState("");
+  const [buscou, setBuscou] = useState(false);
+
+  const pacientes = [
+    {
+      cpf: "123.456.789-00",
+      nome: "Maria Silva",
+      genero: "Feminino",
+    },
+    {
+      cpf: "987.654.321-00",
+      nome: "João Santos",
+      genero: "Masculino",
+    },
+    {
+      cpf: "111.222.333-44",
+      nome: "Ana Beatriz",
+      genero: "Feminino",
+    },
+  ];
+
+  const termoNormalizado = termoBusca.trim().toLowerCase();
+
+  const pacientesFiltrados = buscou
+    ? pacientes.filter((paciente) => {
+        if (tipoBusca === "CPF") {
+          return paciente.cpf.toLowerCase().includes(termoNormalizado);
+        }
+
+        return paciente.nome.toLowerCase().includes(termoNormalizado);
+      })
+    : [];
+
+  function pesquisarPaciente() {
+    setBuscou(true);
+  }
+
+  function limparBusca() {
+    setTermoBusca("");
+    setTipoBusca("CPF");
+    setBuscou(false);
+  }
 
   return (
     <div className="page-container">
@@ -106,16 +149,22 @@ function Pacientes() {
           </div>
         </div>
 
-        <div className="breadcrumb">
-          Home &gt; Pacientes
-        </div>
+        <div className="breadcrumb">Home &gt; Pacientes</div>
 
         <div className="search-card">
           <div className="campo">
             <label>Buscar por</label>
 
-            <select>
-              <option>CPF</option>
+            <select
+              value={tipoBusca}
+              onChange={(e) => {
+                setTipoBusca(e.target.value);
+                setTermoBusca("");
+                setBuscou(false);
+              }}
+            >
+              <option value="CPF">CPF</option>
+              <option value="Nome">Nome</option>
             </select>
           </div>
 
@@ -124,24 +173,36 @@ function Pacientes() {
 
             <input
               type="text"
-              placeholder="Digite o nome ou CPF"
+              placeholder={
+                tipoBusca === "CPF"
+                  ? "Digite o CPF do paciente"
+                  : "Digite o nome do paciente"
+              }
+              value={termoBusca}
+              onChange={(e) => {
+                setTermoBusca(e.target.value);
+                setBuscou(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  pesquisarPaciente();
+                }
+              }}
             />
           </div>
 
-          <button className="btn-pesquisar">
+          <button className="btn-pesquisar" onClick={pesquisarPaciente}>
             <FiSearch />
             Pesquisar
           </button>
 
-          <button className="btn-limpar">
+          <button className="btn-limpar" onClick={limparBusca}>
             Limpar
           </button>
         </div>
 
         <div className="novo-paciente-container">
-          <button className="btn-novo">
-            + Novo paciente
-          </button>
+          <button className="btn-novo">+ Novo paciente</button>
         </div>
 
         <div className="table-card">
@@ -156,22 +217,44 @@ function Pacientes() {
             </thead>
 
             <tbody>
-              <tr>
-                <td>123.456.789-00</td>
-                <td>Maria Silva</td>
-                <td>Feminino</td>
+              {!buscou ? (
+                <tr>
+                  <td colSpan="4" className="sem-resultados">
+                    Digite um CPF ou nome e clique em pesquisar.
+                  </td>
+                </tr>
+              ) : pacientesFiltrados.length > 0 ? (
+                pacientesFiltrados.map((paciente) => (
+                  <tr key={paciente.cpf}>
+                    <td>{paciente.cpf}</td>
+                    <td>{paciente.nome}</td>
+                    <td>{paciente.genero}</td>
 
-                <td className="acoes">
-                  <FiEye title="Visualizar paciente" />
-                  <FiEdit title="Editar paciente" />
-                  <FiTrash2 title="Excluir paciente" />
-                </td>
-              </tr>
+                    <td className="acoes">
+                      <FiEye title="Visualizar paciente" />
+                      <FiEdit title="Editar paciente" />
+                      <FiTrash2 title="Excluir paciente" />
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className="sem-resultados">
+                    Nenhum paciente encontrado.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
 
           <div className="pagination">
-            <span>1 - 1 de 1 resultados</span>
+            <span>
+              {buscou
+                ? `${pacientesFiltrados.length} resultado${
+                    pacientesFiltrados.length !== 1 ? "s" : ""
+                  } encontrado${pacientesFiltrados.length !== 1 ? "s" : ""}`
+                : "0 resultados encontrados"}
+            </span>
 
             <div>
               <span>10 por página</span>
