@@ -17,13 +17,15 @@ import {
 
 import { BsClockHistory } from "react-icons/bs";
 
-function Pacientes() {
+function Pacientes({ setPaginaAtual }) {
   const [menuFechado, setMenuFechado] = useState(false);
   const [tipoBusca, setTipoBusca] = useState("CPF");
   const [termoBusca, setTermoBusca] = useState("");
   const [buscou, setBuscou] = useState(false);
+  const [pacienteSelecionado, setPacienteSelecionado] = useState(null);
+  const [pacienteEditando, setPacienteEditando] = useState(null);
 
-  const pacientes = [
+  const [pacientes, setPacientes] = useState([
     {
       cpf: "123.456.789-00",
       nome: "Maria Silva",
@@ -39,7 +41,7 @@ function Pacientes() {
       nome: "Ana Beatriz",
       genero: "Feminino",
     },
-  ];
+  ]);
 
   const termoNormalizado = termoBusca.trim().toLowerCase();
 
@@ -55,12 +57,57 @@ function Pacientes() {
 
   function pesquisarPaciente() {
     setBuscou(true);
+    setPacienteSelecionado(null);
+    setPacienteEditando(null);
   }
 
   function limparBusca() {
     setTermoBusca("");
     setTipoBusca("CPF");
     setBuscou(false);
+    setPacienteSelecionado(null);
+    setPacienteEditando(null);
+  }
+
+  function visualizarPaciente(paciente) {
+    setPacienteSelecionado(paciente);
+    setPacienteEditando(null);
+  }
+
+  function editarPaciente(paciente) {
+    setPacienteEditando({ ...paciente });
+    setPacienteSelecionado(null);
+  }
+
+  function salvarEdicao() {
+    if (!pacienteEditando.nome || !pacienteEditando.genero) {
+      alert("Preencha nome e gênero antes de salvar.");
+      return;
+    }
+
+    setPacientes(
+      pacientes.map((paciente) =>
+        paciente.cpf === pacienteEditando.cpf ? pacienteEditando : paciente
+      )
+    );
+
+    setPacienteEditando(null);
+    setBuscou(true);
+  }
+
+  function excluirPaciente(cpf) {
+    const confirmar = window.confirm(
+      "Tem certeza que deseja excluir este paciente?"
+    );
+
+    if (!confirmar) {
+      return;
+    }
+
+    setPacientes(pacientes.filter((paciente) => paciente.cpf !== cpf));
+    setPacienteSelecionado(null);
+    setPacienteEditando(null);
+    setBuscou(true);
   }
 
   return (
@@ -77,12 +124,12 @@ function Pacientes() {
 
           <nav>
             <ul>
-              <li>
+              <li onClick={() => setPaginaAtual("dashboard")}>
                 <FiHome />
                 {!menuFechado && "Dashboard"}
               </li>
 
-              <li className="active">
+              <li className="active" onClick={() => setPaginaAtual("pacientes")}>
                 <FiUsers />
                 {!menuFechado && "Pacientes"}
               </li>
@@ -161,6 +208,8 @@ function Pacientes() {
                 setTipoBusca(e.target.value);
                 setTermoBusca("");
                 setBuscou(false);
+                setPacienteSelecionado(null);
+                setPacienteEditando(null);
               }}
             >
               <option value="CPF">CPF</option>
@@ -182,6 +231,8 @@ function Pacientes() {
               onChange={(e) => {
                 setTermoBusca(e.target.value);
                 setBuscou(false);
+                setPacienteSelecionado(null);
+                setPacienteEditando(null);
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -202,7 +253,12 @@ function Pacientes() {
         </div>
 
         <div className="novo-paciente-container">
-          <button className="btn-novo">+ Novo paciente</button>
+          <button
+            className="btn-novo"
+            onClick={() => setPaginaAtual("novoPaciente")}
+          >
+            + Novo paciente
+          </button>
         </div>
 
         <div className="table-card">
@@ -231,9 +287,20 @@ function Pacientes() {
                     <td>{paciente.genero}</td>
 
                     <td className="acoes">
-                      <FiEye title="Visualizar paciente" />
-                      <FiEdit title="Editar paciente" />
-                      <FiTrash2 title="Excluir paciente" />
+                      <FiEye
+                        title="Visualizar paciente"
+                        onClick={() => visualizarPaciente(paciente)}
+                      />
+
+                      <FiEdit
+                        title="Editar paciente"
+                        onClick={() => editarPaciente(paciente)}
+                      />
+
+                      <FiTrash2
+                        title="Excluir paciente"
+                        onClick={() => excluirPaciente(paciente.cpf)}
+                      />
                     </td>
                   </tr>
                 ))
@@ -261,6 +328,88 @@ function Pacientes() {
             </div>
           </div>
         </div>
+
+        {pacienteSelecionado && (
+          <div className="details-card">
+            <h3>Dados do paciente</h3>
+
+            <p>
+              <strong>CPF:</strong> {pacienteSelecionado.cpf}
+            </p>
+
+            <p>
+              <strong>Nome:</strong> {pacienteSelecionado.nome}
+            </p>
+
+            <p>
+              <strong>Gênero:</strong> {pacienteSelecionado.genero}
+            </p>
+
+            <button
+              className="btn-limpar"
+              onClick={() => setPacienteSelecionado(null)}
+            >
+              Fechar
+            </button>
+          </div>
+        )}
+
+        {pacienteEditando && (
+          <div className="details-card">
+            <h3>Editar paciente</h3>
+
+            <div className="form-grid">
+              <div className="campo">
+                <label>CPF</label>
+                <input type="text" value={pacienteEditando.cpf} disabled />
+              </div>
+
+              <div className="campo">
+                <label>Nome</label>
+                <input
+                  type="text"
+                  value={pacienteEditando.nome}
+                  onChange={(e) =>
+                    setPacienteEditando({
+                      ...pacienteEditando,
+                      nome: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div className="campo">
+                <label>Gênero</label>
+                <select
+                  value={pacienteEditando.genero}
+                  onChange={(e) =>
+                    setPacienteEditando({
+                      ...pacienteEditando,
+                      genero: e.target.value,
+                    })
+                  }
+                >
+                  <option value="Feminino">Feminino</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="form-actions">
+              <button
+                className="btn-limpar"
+                onClick={() => setPacienteEditando(null)}
+              >
+                Cancelar
+              </button>
+
+              <button className="btn-pesquisar" onClick={salvarEdicao}>
+                Salvar alterações
+              </button>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
