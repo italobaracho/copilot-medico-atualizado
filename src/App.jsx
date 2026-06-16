@@ -1,116 +1,145 @@
-import './App.css'
-import logo_copilot from './assets/logo_copilot_med.png'
-import logo_seguranca from './assets/logo_seguranca.png'
-import logo_ia from './assets/logo_ia.png'
-import logo_perfil from './assets/logo_perfil.png'
+import { useState } from "react";
+import "./App.css";
+
+// Importando a sua tela
+import AnaliseIA from "./AnaliseIA";
+
+// Ícones do menu e cabeçalho
+import {
+  FiBell,
+  FiHome,
+  FiUsers,
+  FiCalendar,
+  FiClipboard,
+  FiFolder,
+  FiBarChart2,
+  FiSettings,
+} from "react-icons/fi";
+import { BsClockHistory } from "react-icons/bs";
 
 function App() {
+  const [menuFechado, setMenuFechado] = useState(false);
+  const [telaAtual, setTelaAtual] = useState("analise"); // Inicia direto na sua tela
+
   return (
-    <div className="container-principal">
+    <div className="page-container">
       
-      {/* LADO ESQUERDO AZUL */}
-      <div className="lado-esquerdo">
-        <div className="conteudo-esquerdo">
-          
+      {/* =========================================
+          MENU LATERAL
+          ========================================= */}
+      <aside className={`sidebar ${menuFechado ? "collapsed" : ""}`}>
+        <div>
           <div className="logo">
-              <img src={logo_copilot} alt="Logo copilot" height="60" />
-              <div className="texto_logo">
-                <span className="titulo_logo">Copilot Medico</span>
-                <span className="subtitulo_logo">Documentação Clínica com IA</span>
-              </div>
-          </div>
-          
-          <h1>
-            Inteligência que
-            <br/>
-            cuida da saúde.
-          </h1>
-          
-          <p>
-            A plataforma completa para profissionais,
-            <br/>
-            pacientes e gestores de clínicas.
-          </p>
-
-          {/* O BLOCO DE SEGURANÇA */}
-          <div className="logo_seguranca">
-              <img src={logo_seguranca} alt="Logo seguranca" height="60" />
-              <div className="texto_seguranca">
-                <span className="titulo_seguranca">Segura e confiável</span>
-                <span className="subtitulo_seguranca">
-                  Seus dados protegidos com
-                  <br/>
-                  tecnologia de ponta.
-                </span>
-              </div>
-          </div>
-
-          {/* O BLOCO DE IA */}
-          <div className="logo_ia">
-              <img src={logo_ia} alt="Logo ia" height="60" />
-              <div className="texto_ia">
-                <span className="titulo_ia">IA que entende você</span>
-                <span className="subtitulo_ia">
-                  Documentação clínica mais rápida
-                  <br/>
-                  e precisa.
-                </span>
-              </div>
-          </div>
-
-          {/* O BLOCO DE Perfil */}
-          <div className="logo_perfil">
-              <img src={logo_perfil} alt="Logo perfil" height="60" />
-              <div className="texto_perfil">
-                <span className="titulo_perfil">Para todos os perfis</span>
-                <span className="subtitulo_perfil">
-                  Soluções completas para cada
-                  <br/>
-                  necessidade.
-                </span>
-              </div>
-          </div>
-
-        </div> 
-      </div>
-    
-      {/* LADO DIREITO BRANCO */}
-      <div className="lado-direito">
-        <div className="formulario-login">
-          <h2>Bem-vindo(a) de volta!</h2>
-          <p className="subtitulo">Faça login para acessar sua conta</p>
-
-          <form>
-            <div className="campo">
-              <label>E-mail</label>
-              <input type="email" placeholder="Digite seu e-mail" />
+            <div className="logo-icon">
+              <FiUsers />
             </div>
-            
-            <div className="campo">
-              <label>Senha</label>
-              <input type="password" placeholder="Digite sua senha" />
-            </div>
+            {!menuFechado && <h2>Copilot Médico</h2>}
+          </div>
 
-            <div className="opcoes-extras">
-              <label>
-                <input type="checkbox" /> Lembrar de mim
-              </label>
-              <a href="#">Esqueci minha senha</a>
-            </div>
+          <nav>
+            <ul>
+              <li 
+                className={telaAtual === "dashboard" ? "active" : ""}
+                onClick={() => setTelaAtual("dashboard")}
+              >
+                <FiHome />
+                {!menuFechado && "Dashboard"}
+              </li>
 
-            <button type="button" className="btn-entrar">Entrar</button>
-            
-            <div className="separador">ou</div>
+              <li 
+                className={telaAtual === "pacientes" ? "active" : ""}
+                onClick={() => setTelaAtual("pacientes")}
+              >
+                <FiUsers />
+                {!menuFechado && "Pacientes"}
+              </li>
 
-            <button type="button" className="btn-google">Entrar com Google</button>
-          </form>
+              <li>
+                <FiCalendar />
+                {!menuFechado && "Agendamentos"}
+              </li>
 
-          <p className="rodape">Ainda não tem uma conta? <a href="#">Fale com sua instituição.</a></p>
+              <li 
+                className={telaAtual === "analise" ? "active" : ""}
+                onClick={() => setTelaAtual("analise")}
+              >
+                <BsClockHistory />
+                {!menuFechado && "Análise com IA"}
+              </li>
+
+              <li>
+                <FiClipboard />
+                {!menuFechado && "Atendimentos"}
+              </li>
+
+              <li>
+                <FiFolder />
+                {!menuFechado && "Prontuários"}
+              </li>
+
+              <li>
+                <FiBarChart2 />
+                {!menuFechado && "Relatórios"}
+              </li>
+
+              <li>
+                <FiSettings />
+                {!menuFechado && "Configurações"}
+              </li>
+            </ul>
+          </nav>
         </div>
-      </div>
 
+        <button
+          className="recolher-menu"
+          onClick={() => setMenuFechado(!menuFechado)}
+        >
+          <span>{menuFechado ? ">" : "<"}</span>
+          {!menuFechado && "Recolher menu"}
+        </button>
+      </aside>
+
+      {/* =========================================
+          CONTEÚDO PRINCIPAL (CABEÇALHO + LAUDO)
+          ========================================= */}
+      <main className="content">
+        
+        {/* Cabeçalho do Dr. Rafael */}
+        <div className="top-header">
+          <div>
+            <h1>{telaAtual === "analise" ? "Análise com IA" : "Pacientes"}</h1>
+            <p>
+              {telaAtual === "analise" 
+                ? "Visualize os resultados laboratoriais e insights da IA." 
+                : "Consulte e gerencie as informações dos pacientes."}
+            </p>
+          </div>
+
+          <div className="user-area">
+            <div className="notification-box">
+              <FiBell size={20} />
+              <span className="notification-badge">3</span>
+            </div>
+            <div>
+              <strong>Dr. Rafael Menezes</strong>
+              <p>Clínica Exemplo</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Caminho da página */}
+        <div className="breadcrumb">
+          Home &gt; {telaAtual === "analise" ? "Análise com IA" : "Pacientes"}
+        </div>
+
+        {/* Área onde a sua tela de IA é renderizada */}
+        <div className="conteudo-dinamico">
+          {telaAtual === "analise" && <AnaliseIA />}
+        </div>
+
+      </main>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
