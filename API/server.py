@@ -33,7 +33,7 @@ from backend.patient_db import (
     get_all_patients_info, ensure_patient_exists, get_patient_chat_history, 
     add_message_to_history, add_consultation_to_patient, get_patient_consultations, 
     get_consultation_chat_history, add_message_to_consultation_history, add_transcription_log_to_patient,
-    get_patient_transcription_log
+    get_patient_transcription_log, delete_patient
     )
 from backend.processador_voz.processador_voz import TranscritorVoz
 from backend.audio_service import Diarizador
@@ -327,14 +327,26 @@ def check_patient_exists_api(patient_id):
 def create_patient():
     """
     Cria um novo paciente e retorna seu ID e nome.
-    Espera um JSON com 'name' (opcional).
+    Espera um JSON com 'name', 'cpf', 'age' (ou 'idade'), 'gender' (ou 'sexo') (opcionais).
     """
     try:
-        data = request.json
-        patient_name = data.get('name')
+        data = request.json or {}
+        patient_name = data.get('name') or data.get('nome')
+        patient_cpf = data.get('cpf')
+        patient_age = data.get('age') or data.get('idade')
+        # Se idade for passado como número, converte pra string
+        if isinstance(patient_age, int) or isinstance(patient_age, float):
+            patient_age = f"{patient_age} anos"
+        patient_gender = data.get('gender') or data.get('sexo')
 
         new_patient_id = generate_patient_id()
-        patient_data = ensure_patient_exists(new_patient_id, name=patient_name)
+        patient_data = ensure_patient_exists(
+            new_patient_id, 
+            name=patient_name, 
+            cpf=patient_cpf, 
+            age=patient_age, 
+            gender=patient_gender
+        )
         
         # Adiciona a primeira "consulta" padrão ao criar o paciente
         first_consultation_id = add_consultation_to_patient(new_patient_id, "Primeira Consulta")
@@ -350,6 +362,51 @@ def create_patient():
         import traceback
         traceback.print_exc()
         return jsonify({"status": "error", "message": f"Erro interno do servidor ao criar paciente: {e}"}), 500
+
+
+# NOVO ENDPOINT: Obter Dados Completos do Paciente
+@app.route('/api/patients/<patient_id>', methods=['GET'])
+@roles_required("administrador", "medico", "recepcao")
+def get_patient_details(patient_id):
+    try:
+        patient_data = get_patient_data(patient_id)
+        if patient_data:
+            return jsonify({
+                "status": "success",
+                "patient": {
+                    "id": patient_id,
+                    "nome": patient_data.get("name", "Desconhecido"),
+                    "cpf": patient_data.get("cpf", "000.000.000-00"),
+                    "idade": patient_data.get("age", "Não informado"),
+                    "sexo": patient_data.get("gender", "Não informado"),
+                    "atendimentos": patient_data.get("consultations", []),
+                    "exames": patient_data.get("exames", [])
+                }
+            }), 200
+        else:
+            return jsonify({"status": "error", "message": "Paciente não encontrado."}), 404
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": f"Erro ao obter dados do paciente: {e}"}), 500
+
+
+
+# NOVO ENDPOINT: Deletar Paciente
+@app.route('/api/patients/<patient_id>', methods=['DELETE'])
+@roles_required("administrador", "medico", "recepcao")
+def delete_patient_api(patient_id):
+    try:
+        success = delete_patient(patient_id)
+        if success:
+            return jsonify({"status": "success", "message": "Paciente removido com sucesso."}), 200
+        else:
+            return jsonify({"status": "error", "message": "Paciente não encontrado."}), 404
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": f"Erro ao remover paciente: {e}"}), 500
+
 
 
 # Endpoint do Chat para usar o histórico da consulta selecionada

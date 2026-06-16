@@ -1,0 +1,275 @@
+/* Zera as margens e faz a tela ocupar 100% da janela */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body, html, #root {
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Coloca as duas metades lado a lado */
+.container-principal {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* --- LADO ESQUERDO --- */
+.lado-esquerdo {
+  background-color: #0b45d0; /* O azul escuro da marca */
+  color: white;
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 40px;
+}
+
+.conteudo-esquerdo {
+  max-width: 400px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+  font-size: 20px;
+  margin-bottom: 30px;
+}
+.texto_logo{
+  display: flex;
+  flex-direction: column;
+}
+
+.titulo_logo{
+  font-weight: bold;
+  font-size: 22px;
+}
+
+.subtitulo_logo{
+  font-weight: normal;
+  font-size: 14px;
+  color: #e0e0e0;
+}
+
+.logo_seguranca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+  font-size: 20px;
+  margin-bottom: 20px;
+  margin-top: 30px;
+}
+
+.texto_seguranca{
+  display: flex;
+  flex-direction: column;
+}
+
+.titulo_seguranca{
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.subtitulo_seguranca{
+  font-weight: normal;
+  font-size: 14px;
+  color: #e0e0e0;
+  text-align: left;
+}
+
+.logo_ia {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+  font-size: 20px;
+  margin-bottom: 20px;
+  margin-top: 30px;
+}
+
+.texto_ia{
+  display: flex;
+  flex-direction: column;
+}
+
+.titulo_ia{
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.subtitulo_ia{
+  font-weight: normal;
+  font-size: 14px;
+  color: #e0e0e0;
+  text-align: left;
+}
+
+.logo_perfil {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+  font-size: 20px;
+  margin-bottom: 20px;
+  margin-top: 30px;
+}
+
+.texto_perfil{
+  display: flex;
+  flex-direction: column;
+}
+
+.titulo_perfil{
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.subtitulo_perfil{
+  font-weight: normal;
+  font-size: 14px;
+  color: #e0e0e0;
+  text-align: left;
+}
+
+.lado-esquerdo h1 {
+  font-size: 36px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: white;
+  line-height: 1;
+}
+
+.lado-esquerdo p {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #e0e0e0;
+  text-align: left;
+}
+
+/* --- LADO DIREITO --- */
+.lado-direito {
+  background-color: white;
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.formulario-login {
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+}
+
+.formulario-login h2 {
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.subtitulo {
+  color: #666;
+  margin-bottom: 30px;
+  font-size: 14px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.campo label {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.campo input {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.opcoes-extras {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.opcoes-extras a, .rodape a {
+  color: #0b45d0;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.opcoes-extras label {
+  display: flex;
+  align-items: center; 
+  gap: 8px; 
+  color: #666; 
+  cursor: pointer; 
+}
+
+.opcoes-extras input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0; 
+  cursor: pointer;
+}
+
+.btn-entrar {
+  width: 100%;
+  background-color: #0b45d0;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.btn-entrar:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+.separador {
+  text-align: center;
+  color: #999;
+  margin-bottom: 20px;
+  font-size: 12px;
+}
+
+.btn-google {
+  width: 100%;
+  background-color: white;
+  color: #333;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: 30px;
+  font-weight: bold;
+}
+
+.rodape {
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+}

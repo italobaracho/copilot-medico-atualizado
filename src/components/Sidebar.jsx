@@ -3,7 +3,7 @@ import {
   BarChart2, Users, Code, Lock, HelpCircle, LogOut 
 } from 'lucide-react';
 
-function Sidebar({ currentView, onViewChange }) {
+function Sidebar({ currentView, onViewChange, onLogout }) {
   // Lista de itens do menu central
   const menuItems = [
     { id: 'search', icon: Search, label: 'Buscar' },
@@ -59,7 +59,7 @@ function Sidebar({ currentView, onViewChange }) {
         <button style={styles.navButton} title="Ajuda">
           <HelpCircle size={22} color="#64748b" />
         </button>
-        <button style={styles.navButton} title="Sair">
+        <button style={styles.navButton} onClick={onLogout} title="Sair">
           <LogOut size={22} color="#64748b" />
         </button>
       </div>

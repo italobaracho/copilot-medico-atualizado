@@ -17,8 +17,12 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
 *.sw?
+
+# local DB and models
+.env
+API/backend/vosk-model-small-pt-0.3/
+API/backend/patients_db.json
+API/backend/users_db.json
+API/backend/__pycache__/
+
