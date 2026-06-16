@@ -242,3 +242,37 @@ def delete_patient(patient_id):
         save_database(db)
         return True
     return False
+
+def add_transcription_log_to_patient(patient_id: str, consultation_id: str, text: str, duration_seconds: float, dialogue: list = None):
+    """
+    Adiciona um log de transcrição de áudio para o paciente.
+    """
+    db = load_database()
+    patient_data = db.get(patient_id)
+    if not patient_data:
+        print(f"Erro: Paciente {patient_id} não encontrado para adicionar log de transcrição.")
+        return None
+
+    if "transcription_logs" not in patient_data:
+        patient_data["transcription_logs"] = []
+
+    log_entry = {
+        "id": str(uuid.uuid4()),
+        "consultation_id": consultation_id,
+        "text": text,
+        "duration_seconds": duration_seconds,
+        "dialogue": dialogue,
+        "timestamp": datetime.now().isoformat()
+    }
+    patient_data["transcription_logs"].append(log_entry)
+    save_database(db)
+    return log_entry
+
+def get_patient_transcription_log(patient_id: str) -> list[dict]:
+    """
+    Retorna a lista de logs de transcrições de áudio de um paciente.
+    """
+    patient_data = get_patient_data(patient_id)
+    if patient_data:
+        return patient_data.get("transcription_logs", [])
+    return []

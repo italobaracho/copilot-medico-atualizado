@@ -9,3 +9,6 @@ SpeechRecognition
 numpy
 python3-pika
 vosk
+groq
+pydantic-settings
+pydantic
