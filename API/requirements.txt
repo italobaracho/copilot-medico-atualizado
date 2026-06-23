@@ -12,3 +12,5 @@ vosk
 groq
 pydantic-settings
 pydantic
+pyTelegramBotAPI
+pydub

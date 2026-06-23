@@ -1,27 +1,35 @@
-# 📋 Planejamento da 2ª Integração - Copilot Médico
+# 📋 Planejamento da 2ª Integração: Copilot Médico + Telegram Bot
 
-Este documento contém a divisão de tarefas (ideal para cadastro no **ClickUp**) e o plano de integração das novas funcionalidades do **segundo repositório** (`Jamuelton/copilot_medico_grupo_6_es/tree/develop`).
+Este documento contém o planejamento de arquitetura e a divisão de tarefas (ideal para cadastro no **ClickUp**) para integrar o **Telegram Bot** como capturador de áudio do sistema.
 
-Como nossa equipe é composta por desenvolvedores iniciantes, as tarefas foram descritas de forma **fácil, direta e objetiva**, com critérios de aceitação claros.
-
----
-
-## 👥 Estrutura da Equipe e Papéis
-
-*   **Gerente de Projetos (GP)**: Responsável por gerenciar os prazos e organizar o ClickUp.
-*   **Líder Técnico (Você)**: Responsável por tirar dúvidas, revisar o código e fazer a **aprovação final (Merge para a `main`)**.
-*   **Desenvolvedores Backend (2 pessoas)**: Dev 1 e Dev 2.
-*   **Desenvolvedores Frontend (3 pessoas)**: Dev 3, Dev 4 e Dev 5.
+Esta abordagem **substitui a gravação direta pelo microfone do navegador**, o que simplifica drasticamente o frontend (evitando problemas de permissão de microfone) e torna o uso prático: o médico ou paciente grava o áudio pelo próprio celular no Telegram e ele aparece transcrito e diarizado no prontuário!
 
 ---
 
-## 📂 Visão Geral das Novas Funcionalidades (2º Repositório)
+## 🏗️ Como vai funcionar a Integração (Fluxo do Sistema)
 
-O segundo grupo focou fortemente em **Áudio, Transcrição em tempo real, Diarização de Voz e Recomendações**. Nosso objetivo é trazer essas novidades para o nosso sistema atual que já é bonito e funcional. As principais adições são:
-1.  **Captura de Áudio**: Gravação do atendimento pelo microfone diretamente na interface web.
-2.  **Controle de Gravação**: Botões para Gravar, Pausar, Retomar e Parar.
-3.  **Diarização de Voz**: Divisão automatizada do áudio transcrevendo quem é "Médico" e quem é "Paciente" (diarização ping-pong).
-4.  **Log de Transcrições**: Histórico estruturado de todas as conversas gravadas por paciente.
+```mermaid
+sequenceDiagram
+    participant Medico as 🩺 Painel Web (React)
+    participant TeleBot as 🤖 Telegram Bot (Python)
+    participant Backend as ⚙️ API Flask (Python)
+    participant IA as 🧠 Groq (Llama-3.3)
+
+    Medico->>Backend: Inicia consulta e gera Código (ex: 1294)
+    Note over Medico: Código 1294 exibido na tela
+    Note over TeleBot: Médico grava áudio no celular
+    TeleBot->>Backend: Envia áudio (.ogg) associado ao Código 1294
+    Backend->>Backend: Converte áudio (.ogg para .wav)
+    Backend->>Backend: Transcreve e separa fala (Diarização)
+    Backend->>IA: Envia transcrição para gerar recomendações
+    IA-->>Backend: Retorna conduta e recomendações
+    Backend->>Medico: Atualiza tela com transcrição e conduta (via Polling)
+```
+
+1.  **Código de Associação**: Ao iniciar uma consulta na interface React, o sistema gera um código curto (ex: `1294`).
+2.  **Envio via Telegram**: O médico abre o bot no celular, digita `1294` (para associar a gravação a essa consulta) e envia uma mensagem de voz.
+3.  **Processamento**: O backend Flask recebe a mensagem do Telegram, baixa o arquivo `.ogg`, converte para `.wav`, faz a transcrição com diarização ping-pong ("Médico" e "Paciente") e armazena os dados.
+4.  **Atualização**: O frontend React atualiza a tela automaticamente (polling) exibindo as falas formatadas e a sugestão de conduta gerada pela IA.
 
 ---
 
@@ -32,28 +40,29 @@ O segundo grupo focou fortemente em **Áudio, Transcrição em tempo real, Diari
 ---
 
 #### 🟢 Tarefa B1 (Dev 1 - Backend)
-*   **Título**: `Backend: Endpoint de Processamento de Áudio e Diarização`
-*   **Objetivo**: Criar a rota no Flask que recebe o arquivo de áudio gravado no frontend, faz a transcrição e separa as falas do Médico e do Paciente.
+*   **Título**: `Backend: Criar Bot do Telegram e Recebimento de Áudio`
+*   **Objetivo**: Criar o serviço do bot no Telegram que recebe mensagens de voz e faz o download delas.
 *   **O que fazer (Passo a Passo)**:
-    1.  Criar uma rota `POST /api/diarize` no arquivo `server.py`.
-    2.  Essa rota deve receber um arquivo de áudio `.wav` ou `.mp3` enviado pelo frontend.
-    3.  Chamar o módulo de áudio (`Diarizador` do `audio_service.py`) para transcrever o texto.
-    4.  Retornar um JSON contendo o texto completo e a lista estruturada de falas (quem falou o que e em qual tempo).
+    1.  Criar o bot no Telegram pelo `@BotFather` e obter o Token.
+    2.  No backend Flask, inicializar o bot usando a biblioteca `telebot` (`pyTelegramBotAPI`).
+    3.  Programar o bot para:
+        - Receber mensagens de texto (para capturar o código da consulta, ex: `1294`).
+        - Receber mensagens de voz (áudio).
+    4.  Ao receber uma mensagem de voz, usar `bot.get_file()` e fazer o download do áudio `.ogg` na pasta `/tmp` do servidor.
 *   **Critério de Aceitação**: 
-    - Enviar um áudio via Postman/Insomnia para `/api/diarize` deve retornar status `200` com a transcrição dividida entre "Médico" e "Paciente".
+    - Enviar um áudio de voz para o bot no celular e verificar no console do backend que o arquivo foi baixado com sucesso na pasta temporária.
 
 ---
 
 #### 🟢 Tarefa B2 (Dev 2 - Backend)
-*   **Título**: `Backend: Rota de Recomendações e Banco de Dados de Transcrições`
-*   **Objetivo**: Criar a rota de recomendação clínica e salvar os históricos de áudios no banco JSON do paciente.
+*   **Título**: `Backend: Conversão de Áudio, Diarização e Banco de Dados`
+*   **Objetivo**: Converter o arquivo `.ogg` baixado do Telegram para `.wav`, chamar a transcrição/diarização e salvar o log no banco JSON do paciente.
 *   **O que fazer (Passo a Passo)**:
-    1.  Criar uma rota `POST /api/recommendation` no `server.py`.
-    2.  Essa rota deve enviar a transcrição do atendimento para o Groq (Llama-3.3) e retornar recomendações de exames ou receitas médicas recomendadas.
-    3.  Atualizar a função de salvar no banco `patient_db.py` para gravar os logs de transcrições dentro da lista `"transcription_logs"` do respectivo paciente.
+    1.  Utilizar a biblioteca `pydub` para converter o arquivo `.ogg` recebido para `.wav` de 16kHz mono (requisito da transcrição).
+    2.  Chamar a função de transcrição/diarização (`Diarizador` do `audio_service.py`).
+    3.  Salvar o log estruturado de transcrição (`add_transcription_log_to_patient`) no banco de dados local do paciente associado àquela consulta.
 *   **Critério de Aceitação**:
-    - Chamar `/api/recommendation` passando o texto da consulta deve retornar as sugestões da IA.
-    - O banco de dados `patients_db.json` deve registrar o log de áudios e transcrições vinculados ao ID do paciente.
+    - Após o áudio ser processado, o arquivo `patients_db.json` deve conter os diálogos separados entre "Médico" e "Paciente" salvos no histórico da consulta de código correspondente.
 
 ---
 
@@ -62,64 +71,55 @@ O segundo grupo focou fortemente em **Áudio, Transcrição em tempo real, Diari
 ---
 
 #### 🔵 Tarefa F1 (Dev 3 - Frontend)
-*   **Título**: `Frontend: Interface Visual do Gravador de Áudio`
-*   **Objetivo**: Criar os botões e estados visuais para gravação de voz no prontuário do paciente.
+*   **Título**: `Frontend: Tela de Conexão com o Telegram`
+*   **Objetivo**: Desenhar o painel informativo para instruir o médico a enviar o áudio via Telegram.
 *   **O que fazer (Passo a Passo)**:
-    1.  No painel de atendimento do paciente, adicionar uma seção de "Gravação de Consulta".
-    2.  Criar o botão de microfone (usando ícones do `lucide-react`).
-    3.  Criar uma barra de progresso visual simples ou cronômetro que mostra o tempo de gravação ativo (ex: `00:15`).
+    1.  No painel lateral ou de atendimento, remover os antigos botões de gravação de microfone.
+    2.  Inserir um card visual elegante:
+        - Ícone do Telegram.
+        - Link/Botão clicável que abre o bot (ex: `https://t.me/NomeDoBot`).
+        - Instruções simples: *"1. Clique no link e inicie o bot. 2. Envie o código da consulta. 3. Grave seu áudio de voz."*
 *   **Critério de Aceitação**:
-    - O médico deve conseguir ver a seção de gravação de áudio e os botões alinhados com o design moderno do nosso sistema.
+    - O médico deve ver a seção de instruções do Telegram formatada com CSS limpo e link funcional.
 
 ---
 
 #### 🔵 Tarefa F2 (Dev 4 - Frontend)
-*   **Título**: `Frontend: Lógica de Captura e Pausa da Gravação (MediaRecorder)`
-*   **Objetivo**: Programar a lógica que captura a voz do microfone e gerencia as ações de pausar, retomar e parar a gravação.
+*   **Título**: `Frontend: Código de Associação da Consulta`
+*   **Objetivo**: Gerar e exibir na tela o código único que vincula a consulta ao áudio do Telegram.
 *   **O que fazer (Passo a Passo)**:
-    1.  Utilizar a API padrão do navegador (`navigator.mediaDevices.getUserMedia` e `MediaRecorder`).
-    2.  Criar funções no React: `iniciarGravação()`, `pausarGravação()`, `retomarGravação()` e `pararGravação()`.
-    3.  Ao parar a gravação, gerar o arquivo Blob do áudio e enviá-lo via `fetch` (FormData) para o endpoint de backend (`/api/diarize`).
+    1.  Ao criar um atendimento, gerar um número aleatório de 4 dígitos (ex: `1294`).
+    2.  Mostrar esse código em destaque na tela (ex: fonte grande e negrito, cor azul chamativa).
+    3.  Disponibilizar esse código no backend para que o Telegram Bot consiga validar para qual paciente aquele áudio está sendo enviado.
 *   **Critério de Aceitação**:
-    - O microfone deve acender ao gravar, conseguir ser pausado e, ao clicar em parar, disparar a requisição de envio do arquivo para o backend.
+    - Cada nova consulta iniciada deve exibir um código único e legível na tela.
 
 ---
 
 #### 🔵 Tarefa F3 (Dev 5 - Frontend)
-*   **Título**: `Frontend: Exibição dos Logs de Transcrição e Diarização`
-*   **Objetivo**: Desenhar a tela que exibe o diálogo estruturado (Médico vs Paciente) que o backend transcreveu.
+*   **Título**: `Frontend: Atualização Automática de Transcrições (Polling)`
+*   **Objetivo**: Fazer a tela do prontuário buscar atualizações do backend de tempos em tempos para mostrar as falas assim que a transcrição terminar.
 *   **O que fazer (Passo a Passo)**:
-    1.  Criar um painel de histórico de transcrições no prontuário.
-    2.  Exibir as frases em formato de balões de conversa (tipo chat de WhatsApp):
-        - Balões na esquerda com cor suave (ex: cinza) para a fala do **Paciente**.
-        - Balões na direita com cor do sistema (ex: azul claro) para a fala do **Médico**.
-    3.  Adicionar um botão de "Gerar Conduta por IA" que envia essa transcrição para a API de recomendações.
+    1.  Implementar um `setInterval` no React (Polling) que a cada 5 segundos faz uma chamada `GET /api/patients/<id>/transcription-log` para verificar se há novos textos.
+    2.  Assim que o backend retornar os logs de diálogos, desativar o carregamento e desenhar os balões de conversa coloridos na tela.
 *   **Critério de Aceitação**:
-    - A transcrição deve ser renderizada na tela de forma legível, colorida por autor da fala, e permitir solicitar a recomendação da IA com um clique.
+    - O médico envia o áudio pelo Telegram e, sem precisar atualizar a página manualmente, o texto transcrito em balões de chat (Paciente na esquerda, Médico na direita) aparece na tela em poucos segundos.
 
 ---
 
-## 🛠️ Boas Práticas e Regras do GitHub (Como Colaborar)
+## 🛠️ Boas Práticas de Branching e Commits (Lembrete para o Time)
 
-Para que o código de todos se junte de forma organizada e sem bagunça, a equipe seguirá este fluxo:
-
-1.  **Branches**: Cada desenvolvedor deve trabalhar exclusivamente na sua branch de tarefa:
-    - Exemplo: O Dev 3 cria a branch `feature/gravador-audio` a partir de `dev`.
-2.  **Commits**: Seguir a escrita padronizada descrita no nosso manual de commits (ex: `feat(audio): criar botao de gravador`).
-3.  **Ambiente de Integração (`dev`)**: 
-    - Quando o desenvolvedor terminar, ele deve abrir um **Pull Request (PR)** apontando para a branch `dev`.
-    - A gerente de projetos e os colegas revisam. Se estiver ok, o PR é aprovado para entrar na `dev`.
-4.  **Ambiente de Homologação (`homolog`)**:
-    - As features aprovadas na `dev` são enviadas para a `homolog` para o time testar o sistema completo rodando no Docker.
-5.  **Produção (`main`)**:
-    - **Apenas o Líder Técnico (Você)** faz o merge final da branch `homolog` para a `main` após garantir que não há bugs.
+*   **Prefixos de Branch**: `feature/telegram-ui`, `fix/conversor-audio`, `feature/telegram-bot`.
+*   **Padrão de Commit**:
+    - `feat(telegram): criar rota para ler codigo do bot`
+    - `fix(conversor): corrigir conversao de ogg para wav`
+*   **Fluxo de Merge**: Desenvolvedor faz PR para `dev` ➡️ Testado e integrado na `homolog` via Docker ➡️ **Você (Líder Técnico)** faz o merge final para a `main`.
 
 ---
 
-## 🧪 Plano de Testes Simples (Para Iniciantes)
+## 🧪 Plano de Testes Manuais Simples
 
-Oriente sua equipe a testar cada etapa manualmente antes de abrir o Pull Request:
-
-1.  **Teste de Microfone (Frontend)**: Clicar em gravar, falar no microfone, clicar em pausar, retomar e parar. Verificar se o navegador não trava e gera o arquivo de áudio.
-2.  **Teste de API (Backend)**: Usar o Postman para enviar um áudio de teste curto para `/api/diarize`. Conferir se retorna a estrutura JSON correta com `full_text` e `dialogue`.
-3.  **Teste de Integração (Sistema Completo)**: Fazer o fluxo de ponta a ponta: gravar uma conversa de 10 segundos fingindo ser médico e paciente, parar, aguardar a transcrição aparecer na tela dividida em balões de chat e clicar para a IA sugerir a conduta.
+1.  **Associação de Código**: Crie uma consulta na Web, anote o código (ex: `7733`).
+2.  **Interação com o Bot**: Pelo Telegram do seu celular, envie o número `7733`. O bot deve responder confirmando a associação.
+3.  **Envio do Áudio**: Envie uma mensagem de voz no chat do bot falando *"O paciente relata dor de estômago"*.
+4.  **Validação na Tela**: Verifique se na interface React o carregamento inicia e o diálogo com a transcrição aparece em formato de balão.
