@@ -17,7 +17,7 @@ export default function HomeView({ pacientes, onViewChange, onSelectPatient, pro
       {/* Cabeçalho de Boas-Vindas */}
       <div style={styles.header}>
         <div>
-          <h1 style={styles.welcomeTitle}>Olá, Dr. Copilot! 👋</h1>
+          <h1 style={styles.welcomeTitle}>Olá, bem-vindo ao Sistema Copilot Médico! 👋</h1>
           <p style={styles.subtitle}>{formatCurrentDate()}</p>
         </div>
         <div style={styles.profileBadge}>
