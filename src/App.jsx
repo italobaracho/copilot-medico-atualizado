@@ -140,7 +140,7 @@ function App() {
       />
 
       <main style={{ marginLeft: '80px', flexGrow: 1, padding: '40px' }}>
-        {currentView === 'pacientes' && (
+        {(currentView === 'pacientes' || currentView === 'search') && (
           <PacienteView 
             pacientes={pacientes} 
             onDeletePaciente={handleDeletePaciente}
@@ -155,7 +155,7 @@ function App() {
           />
         )}
 
-        {currentView !== 'pacientes' && currentView !== 'cadastro' && (
+        {currentView !== 'pacientes' && currentView !== 'search' && currentView !== 'cadastro' && (
           <div style={{ fontFamily: 'sans-serif', padding: '20px' }}>
             <h1 style={{ color: '#1e3a8a', marginBottom: '10px' }}>{currentView.toUpperCase()}</h1>
             <p style={{ color: '#64748b' }}>Esta tela está em desenvolvimento ou serve como demonstração.</p>
