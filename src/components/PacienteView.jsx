@@ -5,7 +5,7 @@ import {
   Send, Sparkles, FileUp, Loader2
 } from 'lucide-react';
 
-export default function PacientesView({ pacientes, onDeletePaciente, token }) {
+export default function PacientesView({ pacientes, onDeletePaciente, token, mode = 'list', activePatientId, onClearActivePatient }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientDetailsLoading, setPatientDetailsLoading] = useState(false);
@@ -50,6 +50,14 @@ export default function PacientesView({ pacientes, onDeletePaciente, token }) {
       setPatientDetailsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (activePatientId) {
+      fetchPatientDetails(activePatientId);
+    } else {
+      setSelectedPatient(null);
+    }
+  }, [activePatientId]);
 
   // Cadastra nova consulta
   const handleCreateConsultation = async () => {
@@ -206,18 +214,91 @@ export default function PacientesView({ pacientes, onDeletePaciente, token }) {
 
   // VISTA 1: Barra de Pesquisa de Pacientes
   if (!selectedPatient) {
+    if (mode === 'search') {
+      return (
+        <div style={styles.container}>
+          <div style={{ padding: '20px 0' }}>
+            <h2 style={{ ...styles.title, textAlign: 'center', fontSize: '26px', color: '#1e3b8a', marginBottom: '8px' }}>Busca de Prontuários</h2>
+            <p style={{ textAlign: 'center', color: '#64748b', fontSize: '14px', marginBottom: '32px' }}>
+              Pesquise pelo nome ou CPF do paciente para visualizar o prontuário completo e condutas médicas com IA.
+            </p>
+            
+            <div style={{ ...styles.searchBox, maxWidth: '600px', margin: '0 auto 24px auto', boxShadow: '0 4px 12px rgba(0,70,254,0.05)' }}>
+              <Search size={22} color="#0046fe" style={styles.searchIcon} />
+              <input 
+                type="text" 
+                placeholder="Pesquisar por nome ou CPF..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ ...styles.searchInput, fontSize: '16px' }}
+                autoFocus
+              />
+            </div>
+
+            {searchQuery.trim() === '' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px dashed #cbd5e1', maxWidth: '600px', margin: '0 auto' }}>
+                <Search size={48} color="#94a3b8" style={{ marginBottom: '16px' }} />
+                <h4 style={{ margin: '0 0 6px 0', color: '#475569', fontWeight: '600' }}>Nenhuma busca ativa</h4>
+                <p style={{ margin: 0, color: '#94a3b8', fontSize: '13px', textAlign: 'center' }}>
+                  Insira o termo de pesquisa no campo acima para exibir os resultados correspondentes.
+                </p>
+              </div>
+            ) : patientDetailsLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+                <Loader2 className="animate-spin" size={32} color="#0046fe" />
+              </div>
+            ) : (
+              <div style={{ ...styles.patientList, maxWidth: '600px', margin: '0 auto' }}>
+                {filteredPatients.map(p => (
+                  <div 
+                    key={p.id} 
+                    style={styles.patientCard} 
+                    onClick={() => fetchPatientDetails(p.id)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#0046fe';
+                      e.currentTarget.style.backgroundColor = '#eff6ff';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = '#e2e8f0';
+                      e.currentTarget.style.backgroundColor = '#ffffff';
+                    }}
+                  >
+                    <div style={styles.avatarCircle}><User size={20} color="#0046fe" /></div>
+                    <div style={{ flexGrow: 1 }}>
+                      <h4 style={styles.patientName}>{p.nome}</h4>
+                      <p style={styles.patientSub}>{p.cpf !== 'Carregando...' ? `CPF: ${p.cpf}` : 'Carregar prontuário'}</p>
+                    </div>
+                    <ChevronRight size={18} color="#94a3b8" />
+                  </div>
+                ))}
+                {filteredPatients.length === 0 && (
+                  <p style={{ color: '#64748b', textAlign: 'center', padding: '20px' }}>Nenhum paciente cadastrado correspondente encontrado.</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Vista de Lista para a aba de Pacientes
     return (
       <div style={styles.container}>
-        <h2 style={styles.title}>Buscar Paciente</h2>
-        <div style={styles.searchBox}>
-          <Search size={20} color="#64748b" style={styles.searchIcon} />
-          <input 
-            type="text" 
-            placeholder="Digite o nome ou CPF do paciente..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={styles.searchInput}
-          />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div>
+            <h2 style={{ ...styles.title, marginBottom: '4px' }}>Pacientes Cadastrados</h2>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>Gerencie o cadastro de pacientes e acesse o histórico clínico correspondente.</p>
+          </div>
+          <div style={{ ...styles.searchBox, width: '320px', marginBottom: 0, padding: '0 12px' }}>
+            <Search size={16} color="#64748b" style={styles.searchIcon} />
+            <input 
+              type="text" 
+              placeholder="Filtrar por nome ou CPF..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ ...styles.searchInput, padding: '10px 0', fontSize: '13px' }}
+            />
+          </div>
         </div>
 
         {patientDetailsLoading ? (
@@ -225,13 +306,44 @@ export default function PacientesView({ pacientes, onDeletePaciente, token }) {
             <Loader2 className="animate-spin" size={32} color="#0046fe" />
           </div>
         ) : (
-          <div style={styles.patientList}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
             {filteredPatients.map(p => (
-              <div key={p.id} style={styles.patientCard} onClick={() => fetchPatientDetails(p.id)}>
-                <div style={styles.avatarCircle}><User size={20} color="#0046fe" /></div>
-                <div>
-                  <h4 style={styles.patientName}>{p.nome}</h4>
-                  <p style={styles.patientSub}>{p.cpf !== 'Carregando...' ? `CPF: ${p.cpf}` : 'Carregar prontuário'}</p>
+              <div 
+                key={p.id} 
+                style={{ ...styles.patientCard, flexDirection: 'column', alignItems: 'flex-start', padding: '20px', gap: '16px', position: 'relative' }} 
+                onClick={() => fetchPatientDetails(p.id)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.borderColor = '#0046fe';
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.04)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ ...styles.avatarCircle, margin: 0 }}><User size={20} color="#0046fe" /></div>
+                  <div>
+                    <h4 style={{ ...styles.patientName, margin: 0 }}>{p.nome}</h4>
+                    <p style={{ ...styles.patientSub, fontSize: '12px' }}>{p.cpf !== 'Carregando...' ? `CPF: ${p.cpf}` : 'Prontuário ativo'}</p>
+                  </div>
+                </div>
+                
+                <div style={{ width: '100%', borderTop: '1px solid #f1f5f9', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '12px', color: '#0046fe', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    Acessar Prontuário <ChevronRight size={14} />
+                  </span>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeletePaciente(p.id);
+                    }}
+                    style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', fontWeight: '500' }}
+                  >
+                    Excluir
+                  </button>
                 </div>
               </div>
             ))}
@@ -248,7 +360,7 @@ export default function PacientesView({ pacientes, onDeletePaciente, token }) {
       {/* Caminho / Breadcrumb + Botão Voltar */}
       <div style={styles.breadcrumbRow}>
         <span style={styles.breadcrumb}>Home &gt; Pacientes &gt; <span style={{color: '#1e293b'}}>Paciente {selectedPatient.cpf}</span></span>
-        <button style={styles.backButton} onClick={() => { setSelectedPatient(null); setViewedExam(null); setShowDetailsMenu(false); setSelectedConsultation(null); }}>
+        <button style={styles.backButton} onClick={() => { setSelectedPatient(null); setViewedExam(null); setShowDetailsMenu(false); setSelectedConsultation(null); if (onClearActivePatient) onClearActivePatient(); }}>
           <ArrowLeft size={16} /> Voltar
         </button>
       </div>

@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import PacienteView from './components/PacienteView';
 import CadastroView from './components/CadastroView';
 import Login from './components/Login';
+import HomeView from './components/HomeView';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
@@ -16,9 +17,15 @@ function App() {
   });
   const [profileName, setProfileName] = useState(localStorage.getItem('profileName') || null);
 
-  const [currentView, setCurrentView] = useState('pacientes');
+  const [currentView, setCurrentView] = useState('home');
+  const [activePatientId, setActivePatientId] = useState(null);
   const [pacientes, setPacientes] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const handleSelectPatientFromHome = (patientId) => {
+    setActivePatientId(patientId);
+    setCurrentView('pacientes');
+  };
 
   const handleLoginSuccess = (userData, userToken, selectedProfile) => {
     localStorage.setItem('token', userToken);
@@ -135,27 +142,52 @@ function App() {
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
       <Sidebar 
         currentView={currentView} 
-        onViewChange={setCurrentView} 
+        onViewChange={(view) => {
+          if (view !== 'pacientes') {
+            setActivePatientId(null);
+          }
+          setCurrentView(view);
+        }} 
         onLogout={handleLogout}
       />
 
       <main style={{ marginLeft: '80px', flexGrow: 1, padding: '40px' }}>
+        {currentView === 'home' && (
+          <HomeView 
+            pacientes={pacientes}
+            onViewChange={(view) => {
+              if (view !== 'pacientes') {
+                setActivePatientId(null);
+              }
+              setCurrentView(view);
+            }}
+            onSelectPatient={handleSelectPatientFromHome}
+            profileName={profileName}
+          />
+        )}
+
         {(currentView === 'pacientes' || currentView === 'search') && (
           <PacienteView 
             pacientes={pacientes} 
             onDeletePaciente={handleDeletePaciente}
             token={token}
+            mode={currentView === 'search' ? 'search' : 'list'}
+            activePatientId={activePatientId}
+            onClearActivePatient={() => setActivePatientId(null)}
           /> 
         )}
 
         {currentView === 'cadastro' && (
           <CadastroView 
             onAddPaciente={handleAddPaciente} 
-            onVoltar={() => setCurrentView('pacientes')} 
+            onVoltar={() => {
+              setActivePatientId(null);
+              setCurrentView('pacientes');
+            }} 
           />
         )}
 
-        {currentView !== 'pacientes' && currentView !== 'search' && currentView !== 'cadastro' && (
+        {currentView !== 'home' && currentView !== 'pacientes' && currentView !== 'search' && currentView !== 'cadastro' && (
           <div style={{ fontFamily: 'sans-serif', padding: '20px' }}>
             <h1 style={{ color: '#1e3a8a', marginBottom: '10px' }}>{currentView.toUpperCase()}</h1>
             <p style={{ color: '#64748b' }}>Esta tela está em desenvolvimento ou serve como demonstração.</p>
