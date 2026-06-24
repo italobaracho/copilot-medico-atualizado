@@ -174,6 +174,7 @@ function App() {
             mode={currentView === 'search' ? 'search' : 'list'}
             activePatientId={activePatientId}
             onClearActivePatient={() => setActivePatientId(null)}
+            onAddNewPatient={() => setCurrentView('cadastro')}
           /> 
         )}
 
