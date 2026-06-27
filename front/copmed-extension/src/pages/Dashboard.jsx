@@ -1,22 +1,16 @@
-import { useState } from "react";
-
 import {
   FiBell,
-  FiHome,
   FiUsers,
   FiCalendar,
   FiClipboard,
   FiFolder,
-  FiBarChart2,
-  FiSettings,
   FiTrendingUp,
 } from "react-icons/fi";
 
 import { BsClockHistory } from "react-icons/bs";
+import Sidebar from "../components/Sidebar";
 
 function Dashboard({ setPaginaAtual }) {
-  const [menuFechado, setMenuFechado] = useState(false);
-
   const pacientes = [
     { id: 1, nome: "Maria Silva", ativo: true, novoMes: true },
     { id: 2, nome: "João Oliveira", ativo: true, novoMes: true },
@@ -116,14 +110,17 @@ function Dashboard({ setPaginaAtual }) {
   ];
 
   const consultasHoje = consultas.filter((consulta) => consulta.hoje);
+
   const consultasConfirmadas = consultasHoje.filter(
     (consulta) => consulta.status === "Confirmado"
   );
+
   const consultasEmAndamento = consultasHoje.filter(
     (consulta) => consulta.status === "Em andamento"
   );
 
   const pacientesAtivos = pacientes.filter((paciente) => paciente.ativo);
+
   const pacientesNovosMes = pacientes.filter((paciente) => paciente.novoMes);
 
   const resumoAtendimentos = atendimentos.reduce((resumo, atendimento) => {
@@ -149,68 +146,7 @@ function Dashboard({ setPaginaAtual }) {
 
   return (
     <div className="page-container">
-      <aside className={`sidebar ${menuFechado ? "collapsed" : ""}`}>
-        <div>
-          <div className="logo">
-            <div className="logo-icon">
-              <FiUsers />
-            </div>
-            {!menuFechado && <h2>Copilot Médico</h2>}
-          </div>
-
-          <nav>
-            <ul>
-              <li className="active" onClick={() => setPaginaAtual("dashboard")}>
-                <FiHome />
-                {!menuFechado && "Dashboard"}
-              </li>
-
-              <li onClick={() => setPaginaAtual("pacientes")}>
-                <FiUsers />
-                {!menuFechado && "Pacientes"}
-              </li>
-
-              <li>
-                <FiCalendar />
-                {!menuFechado && "Agendamentos"}
-              </li>
-
-              <li>
-                <BsClockHistory />
-                {!menuFechado && "Análise com IA"}
-              </li>
-
-              <li>
-                <FiClipboard />
-                {!menuFechado && "Atendimentos"}
-              </li>
-
-              <li>
-                <FiFolder />
-                {!menuFechado && "Prontuários"}
-              </li>
-
-              <li>
-                <FiBarChart2 />
-                {!menuFechado && "Relatórios"}
-              </li>
-
-              <li>
-                <FiSettings />
-                {!menuFechado && "Configurações"}
-              </li>
-            </ul>
-          </nav>
-        </div>
-
-        <button
-          className="recolher-menu"
-          onClick={() => setMenuFechado(!menuFechado)}
-        >
-          <span>{menuFechado ? ">" : "<"}</span>
-          {!menuFechado && "Recolher menu"}
-        </button>
-      </aside>
+      <Sidebar paginaAtual="dashboard" setPaginaAtual={setPaginaAtual} />
 
       <main className="content">
         <div className="top-header">
