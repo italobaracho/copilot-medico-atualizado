@@ -1,6 +1,7 @@
 import io
+from datetime import datetime
 
-from ..backend import patient_db as pdb
+from backend import patient_db as pdb
 
 
 def test_patient_exists_endpoint_false(client, make_auth_headers):
@@ -106,3 +107,106 @@ def test_get_all_patients(client, make_auth_headers):
     payload = resp.get_json()
     assert {"status", "patients"} <= set(payload.keys())
     assert isinstance(payload["patients"], list)
+
+
+def test_start_recording_for_valid_patient_and_consultation(client, make_auth_headers):
+    headers = make_auth_headers()
+    pid = pdb.generate_patient_id()
+    pdb.ensure_patient_exists(pid, name="Paciente Gravacao")
+    cid = pdb.add_consultation_to_patient(pid, "Consulta Gravacao")
+
+    resp = client.post(
+        f"/api/patients/{pid}/consultations/{cid}/recording/start",
+        headers=headers,
+    )
+
+    assert resp.status_code == 201
+    payload = resp.get_json()
+    assert payload["status"] == "success"
+    assert payload["message"] == "Gravacao iniciada com sucesso."
+
+    recording = payload["recording"]
+    assert recording["id"]
+    assert recording["patient_id"] == pid
+    assert recording["consultation_id"] == cid
+    assert recording["status"] == "active"
+    assert recording["ended_at"] is None
+    assert recording["duration_seconds"] == 0
+    assert recording["started_at"]
+    datetime.fromisoformat(recording["started_at"])
+
+    consultation = pdb.get_patient_consultation(pid, cid)
+    assert consultation["recordings"][0]["consultation_id"] == cid
+    assert consultation["recordings"][0]["id"] == recording["id"]
+
+
+def test_start_recording_twice_in_same_consultation_returns_conflict(client, make_auth_headers):
+    headers = make_auth_headers()
+    pid = pdb.generate_patient_id()
+    pdb.ensure_patient_exists(pid, name="Paciente Duplicidade")
+    cid = pdb.add_consultation_to_patient(pid, "Consulta Duplicidade")
+
+    first_resp = client.post(
+        f"/api/patients/{pid}/consultations/{cid}/recording/start",
+        headers=headers,
+    )
+    second_resp = client.post(
+        f"/api/patients/{pid}/consultations/{cid}/recording/start",
+        headers=headers,
+    )
+
+    assert first_resp.status_code == 201
+    assert second_resp.status_code == 409
+    payload = second_resp.get_json()
+    assert payload["status"] == "error"
+    assert payload["error"] == "recording_already_active"
+
+
+def test_start_recording_for_missing_consultation_returns_not_found(client, make_auth_headers):
+    headers = make_auth_headers()
+    pid = pdb.generate_patient_id()
+    pdb.ensure_patient_exists(pid, name="Paciente Sem Consulta")
+
+    resp = client.post(
+        f"/api/patients/{pid}/consultations/consulta-inexistente/recording/start",
+        headers=headers,
+    )
+
+    assert resp.status_code == 404
+    payload = resp.get_json()
+    assert payload["status"] == "error"
+    assert payload["error"] == "consultation_not_found"
+
+
+def test_start_recording_for_missing_patient_returns_not_found(client, make_auth_headers):
+    resp = client.post(
+        "/api/patients/paciente-inexistente/consultations/consulta-inexistente/recording/start",
+        headers=make_auth_headers(),
+    )
+
+    assert resp.status_code == 404
+    payload = resp.get_json()
+    assert payload["status"] == "error"
+    assert payload["error"] == "patient_not_found"
+
+
+def test_start_recording_for_inactive_consultation_returns_conflict(client, make_auth_headers):
+    headers = make_auth_headers()
+    pid = pdb.generate_patient_id()
+    pdb.ensure_patient_exists(pid, name="Paciente Inativo")
+    cid = pdb.add_consultation_to_patient(pid, "Consulta Inativa")
+
+    db = pdb.load_database()
+    consultation = pdb.find_consultation_in_patient(db[pid], cid)
+    consultation["status"] = "closed"
+    pdb.save_database(db)
+
+    resp = client.post(
+        f"/api/patients/{pid}/consultations/{cid}/recording/start",
+        headers=headers,
+    )
+
+    assert resp.status_code == 409
+    payload = resp.get_json()
+    assert payload["status"] == "error"
+    assert payload["error"] == "consultation_inactive"
