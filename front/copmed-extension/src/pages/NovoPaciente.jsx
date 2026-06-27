@@ -1,23 +1,9 @@
 import { useState } from "react";
 
-import {
-  FiBell,
-  FiHome,
-  FiUsers,
-  FiCalendar,
-  FiClipboard,
-  FiFolder,
-  FiBarChart2,
-  FiSettings,
-  FiArrowLeft,
-  FiSave,
-} from "react-icons/fi";
-
-import { BsClockHistory } from "react-icons/bs";
+import { FiBell, FiArrowLeft, FiSave } from "react-icons/fi";
+import Sidebar from "../components/Sidebar";
 
 function NovoPaciente({ setPaginaAtual }) {
-  const [menuFechado, setMenuFechado] = useState(false);
-
   const [formulario, setFormulario] = useState({
     nome: "",
     cpf: "",
@@ -53,69 +39,7 @@ function NovoPaciente({ setPaginaAtual }) {
 
   return (
     <div className="page-container">
-      <aside className={`sidebar ${menuFechado ? "collapsed" : ""}`}>
-        <div>
-          <div className="logo">
-            <div className="logo-icon">
-              <FiUsers />
-            </div>
-
-            {!menuFechado && <h2>Copilot Médico</h2>}
-          </div>
-
-          <nav>
-            <ul>
-              <li onClick={() => setPaginaAtual("dashboard")}>
-                <FiHome />
-                {!menuFechado && "Dashboard"}
-              </li>
-
-              <li className="active" onClick={() => setPaginaAtual("pacientes")}>
-                <FiUsers />
-                {!menuFechado && "Pacientes"}
-              </li>
-
-              <li>
-                <FiCalendar />
-                {!menuFechado && "Agendamentos"}
-              </li>
-
-              <li>
-                <BsClockHistory />
-                {!menuFechado && "Análise com IA"}
-              </li>
-
-              <li>
-                <FiClipboard />
-                {!menuFechado && "Atendimentos"}
-              </li>
-
-              <li>
-                <FiFolder />
-                {!menuFechado && "Prontuários"}
-              </li>
-
-              <li>
-                <FiBarChart2 />
-                {!menuFechado && "Relatórios"}
-              </li>
-
-              <li>
-                <FiSettings />
-                {!menuFechado && "Configurações"}
-              </li>
-            </ul>
-          </nav>
-        </div>
-
-        <button
-          className="recolher-menu"
-          onClick={() => setMenuFechado(!menuFechado)}
-        >
-          <span>{menuFechado ? ">" : "<"}</span>
-          {!menuFechado && "Recolher menu"}
-        </button>
-      </aside>
+      <Sidebar paginaAtual="pacientes" setPaginaAtual={setPaginaAtual} />
 
       <main className="content">
         <div className="top-header">
@@ -153,8 +77,7 @@ function NovoPaciente({ setPaginaAtual }) {
 
           {pacienteSalvo && (
             <div className="alerta-sucesso">
-              Paciente cadastrado com sucesso! Volte para a tela de pacientes
-              para consultar a listagem.
+              Paciente cadastrado com sucesso!
             </div>
           )}
 
@@ -243,7 +166,7 @@ function NovoPaciente({ setPaginaAtual }) {
                 <label>Observações</label>
                 <textarea
                   name="observacoes"
-                  placeholder="Digite observações importantes sobre o paciente"
+                  placeholder="Digite observações importantes"
                   value={formulario.observacoes}
                   onChange={atualizarCampo}
                 />

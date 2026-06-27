@@ -134,7 +134,7 @@ function Pacientes({ setPaginaAtual }) {
                 {!menuFechado && "Pacientes"}
               </li>
 
-              <li>
+              <li onClick={() => setPaginaAtual("agendamentos")}>
                 <FiCalendar />
                 {!menuFechado && "Agendamentos"}
               </li>

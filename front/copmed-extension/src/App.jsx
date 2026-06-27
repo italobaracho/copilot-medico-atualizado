@@ -2,6 +2,7 @@ import { useState } from "react";
 import Dashboard from "./pages/Dashboard";
 import Pacientes from "./pages/Pacientes";
 import NovoPaciente from "./pages/NovoPaciente";
+import Agendamentos from "./pages/Agendamentos";
 
 function App() {
   const [paginaAtual, setPaginaAtual] = useState("dashboard");
@@ -12,6 +13,10 @@ function App() {
 
   if (paginaAtual === "novoPaciente") {
     return <NovoPaciente setPaginaAtual={setPaginaAtual} />;
+  }
+
+  if (paginaAtual === "agendamentos") {
+    return <Agendamentos setPaginaAtual={setPaginaAtual} />;
   }
 
   return <Dashboard setPaginaAtual={setPaginaAtual} />;
