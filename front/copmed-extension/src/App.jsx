@@ -7,19 +7,24 @@ import Agendamentos from "./pages/Agendamentos";
 function App() {
   const [paginaAtual, setPaginaAtual] = useState("dashboard");
 
+  const usuarioLogado = {
+    nome: "Dr. Rafael Menezes",
+    clinica: "Clínica Exemplo",
+  };
+
   if (paginaAtual === "pacientes") {
-    return <Pacientes setPaginaAtual={setPaginaAtual} />;
+    return <Pacientes setPaginaAtual={setPaginaAtual} usuarioLogado={usuarioLogado} />;
   }
 
   if (paginaAtual === "novoPaciente") {
-    return <NovoPaciente setPaginaAtual={setPaginaAtual} />;
+    return <NovoPaciente setPaginaAtual={setPaginaAtual} usuarioLogado={usuarioLogado} />;
   }
 
   if (paginaAtual === "agendamentos") {
-    return <Agendamentos setPaginaAtual={setPaginaAtual} />;
+    return <Agendamentos setPaginaAtual={setPaginaAtual} usuarioLogado={usuarioLogado} />;
   }
 
-  return <Dashboard setPaginaAtual={setPaginaAtual} />;
+  return <Dashboard setPaginaAtual={setPaginaAtual} usuarioLogado={usuarioLogado} />;
 }
 
 export default App;

@@ -1,9 +1,10 @@
 import { useState } from "react";
 
-import { FiBell, FiArrowLeft, FiSave } from "react-icons/fi";
+import { FiArrowLeft, FiSave } from "react-icons/fi";
 import Sidebar from "../components/Sidebar";
+import TopHeader from "../components/TopHeader";
 
-function NovoPaciente({ setPaginaAtual }) {
+function NovoPaciente({ setPaginaAtual, usuarioLogado }) {
   const [formulario, setFormulario] = useState({
     nome: "",
     cpf: "",
@@ -17,6 +18,17 @@ function NovoPaciente({ setPaginaAtual }) {
 
   const [pacienteSalvo, setPacienteSalvo] = useState(false);
 
+  const notificacoes = pacienteSalvo
+    ? [
+        {
+          id: "paciente-salvo",
+          titulo: "Paciente cadastrado com sucesso",
+          descricao: formulario.nome,
+          data: formulario.cpf,
+        },
+      ]
+    : [];
+
   function atualizarCampo(evento) {
     const { name, value } = evento.target;
 
@@ -24,6 +36,8 @@ function NovoPaciente({ setPaginaAtual }) {
       ...formulario,
       [name]: value,
     });
+
+    setPacienteSalvo(false);
   }
 
   function salvarPaciente(evento) {
@@ -42,24 +56,12 @@ function NovoPaciente({ setPaginaAtual }) {
       <Sidebar paginaAtual="pacientes" setPaginaAtual={setPaginaAtual} />
 
       <main className="content">
-        <div className="top-header">
-          <div>
-            <h1>Novo paciente</h1>
-            <p>Cadastre as informações principais do paciente.</p>
-          </div>
-
-          <div className="user-area">
-            <div className="notification-box">
-              <FiBell size={20} />
-              <span className="notification-badge">3</span>
-            </div>
-
-            <div>
-              <strong>Dr. Rafael Menezes</strong>
-              <p>Clínica Exemplo</p>
-            </div>
-          </div>
-        </div>
+        <TopHeader
+          titulo="Novo paciente"
+          descricao="Cadastre as informações principais do paciente."
+          usuarioLogado={usuarioLogado}
+          notificacoes={notificacoes}
+        />
 
         <div className="breadcrumb">
           Home &gt; Pacientes &gt; Novo paciente

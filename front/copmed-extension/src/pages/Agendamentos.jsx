@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import {
-  FiBell,
   FiPlus,
   FiChevronLeft,
   FiChevronRight,
@@ -14,8 +13,9 @@ import {
 } from "react-icons/fi";
 
 import Sidebar from "../components/Sidebar";
+import TopHeader from "../components/TopHeader";
 
-function Agendamentos({ setPaginaAtual }) {
+function Agendamentos({ setPaginaAtual, usuarioLogado }) {
   const [visualizacao, setVisualizacao] = useState("Semana");
   const [tipoFiltro, setTipoFiltro] = useState("Todos");
   const [semanaOffset, setSemanaOffset] = useState(0);
@@ -117,6 +117,19 @@ function Agendamentos({ setPaginaAtual }) {
   const agendamentosDaSemana = agendamentos.filter(
     (item) => item.dia >= primeiroDia && item.dia <= ultimoDia
   );
+
+  const notificacoes = agendamentosDaSemana.map((agendamento) => ({
+    id: agendamento.id,
+    titulo:
+      agendamento.tipo === "Intervalo"
+        ? "Intervalo na agenda"
+        : `${agendamento.tipo} agendada`,
+    descricao:
+      agendamento.tipo === "Intervalo"
+        ? `${agendamento.hora} às ${agendamento.fim}`
+        : `${agendamento.paciente} • ${agendamento.hora} às ${agendamento.fim}`,
+    data: `Dia ${agendamento.dia}`,
+  }));
 
   const agendamentosFiltrados =
     tipoFiltro === "Todos"
@@ -258,26 +271,12 @@ function Agendamentos({ setPaginaAtual }) {
       <Sidebar paginaAtual="agendamentos" setPaginaAtual={setPaginaAtual} />
 
       <main className="content">
-        <div className="top-header">
-          <div>
-            <h1>Agendamentos</h1>
-            <p>Visualize e gerencie sua agenda de consultas.</p>
-          </div>
-
-          <div className="user-area">
-            <div className="notification-box">
-              <FiBell size={20} />
-              <span className="notification-badge">
-                {agendamentosDaSemana.length}
-              </span>
-            </div>
-
-            <div>
-              <strong>Dr. Rafael Menezes</strong>
-              <p>Clínica Exemplo</p>
-            </div>
-          </div>
-        </div>
+        <TopHeader
+          titulo="Agendamentos"
+          descricao="Visualize e gerencie sua agenda de consultas."
+          usuarioLogado={usuarioLogado}
+          notificacoes={notificacoes}
+        />
 
         <div className="breadcrumb">Home &gt; Agendamentos</div>
 
