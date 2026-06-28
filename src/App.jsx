@@ -1,9 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
+import TopBar from './components/TopBar';
 import PacienteView from './components/PacienteView';
 import CadastroView from './components/CadastroView';
 import Login from './components/Login';
 import HomeView from './components/HomeView';
+import { API_URL } from './api';
+import theme from './theme';
+
+// Telas do menu lateral que ainda não foram construídas.
+// Mostram um placeholder amigável (a tela "Análise com IA" será
+// implementada pelo time conforme o plano de implementação).
+const PLACEHOLDER_TITLES = {
+  'agendamentos': 'Agendamentos',
+  'analise-ia': 'Análise com IA',
+  'atendimentos': 'Atendimentos',
+  'prontuarios': 'Prontuários',
+  'relatorios': 'Relatórios',
+  'configuracoes': 'Configurações',
+};
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
@@ -21,10 +36,11 @@ function App() {
   const [activePatientId, setActivePatientId] = useState(null);
   const [pacientes, setPacientes] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
-  const handleSelectPatientFromHome = (patientId) => {
-    setActivePatientId(patientId);
-    setCurrentView('pacientes');
+  const changeView = (view) => {
+    if (view !== 'pacientes') setActivePatientId(null);
+    setCurrentView(view);
   };
 
   const handleLoginSuccess = (userData, userToken, selectedProfile) => {
@@ -50,22 +66,20 @@ function App() {
     if (!token) return;
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/api/all-patients', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const response = await fetch(`${API_URL}/api/all-patients`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
       if (response.ok && data.status === 'success') {
-        // Mapeia os dados básicos recebidos da listagem geral
-        // Os detalhes completos (como idade, cpf e sexo) serão carregados individualmente
-        // quando um paciente específico for clicado.
+        // Mapeia os dados básicos recebidos da listagem geral.
+        // Os detalhes completos (idade, cpf e sexo) são carregados
+        // individualmente quando um paciente específico é aberto.
         setPacientes(data.patients.map(p => ({
           id: p.id,
           nome: p.name,
-          cpf: 'Carregando...',
+          cpf: p.cpf || 'Não informado',
           idade: '',
-          sexo: '',
+          sexo: p.gender || 'Não informado',
           atendimentos: [],
           exames: []
         })));
@@ -78,14 +92,12 @@ function App() {
   }, [token]);
 
   useEffect(() => {
-    if (token) {
-      fetchPacientes();
-    }
+    if (token) fetchPacientes();
   }, [token, fetchPacientes]);
 
   const handleAddPaciente = async (novoPaciente) => {
     try {
-      const response = await fetch('http://localhost:3001/api/patients', {
+      const response = await fetch(`${API_URL}/api/patients`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,7 +112,7 @@ function App() {
       });
       const data = await response.json();
       if (response.ok && data.status === 'success') {
-        fetchPacientes(); // Atualiza a lista geral
+        fetchPacientes();
       } else {
         alert('Erro ao cadastrar paciente no servidor: ' + (data.message || ''));
       }
@@ -114,15 +126,13 @@ function App() {
     const confirmar = window.confirm("Tem certeza que deseja remover este paciente do sistema?");
     if (confirmar) {
       try {
-        const response = await fetch(`http://localhost:3001/api/patients/${id}`, {
+        const response = await fetch(`${API_URL}/api/patients/${id}`, {
           method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await response.json();
         if (response.ok && data.status === 'success') {
-          fetchPacientes(); // Atualiza a lista geral
+          fetchPacientes();
         } else {
           alert('Erro ao remover paciente: ' + (data.message || ''));
         }
@@ -138,60 +148,61 @@ function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
+  const sidebarWidth = collapsed ? theme.layout.sidebarCollapsed : theme.layout.sidebarWidth;
+  const placeholderTitle = PLACEHOLDER_TITLES[currentView];
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
-      <Sidebar 
-        currentView={currentView} 
-        onViewChange={(view) => {
-          if (view !== 'pacientes') {
-            setActivePatientId(null);
-          }
-          setCurrentView(view);
-        }} 
+    <div style={{ minHeight: '100vh', backgroundColor: theme.colors.bg }}>
+      <Sidebar
+        currentView={currentView}
+        onViewChange={changeView}
         onLogout={handleLogout}
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed((c) => !c)}
       />
 
-      <main style={{ marginLeft: '80px', flexGrow: 1, padding: '40px' }}>
+      <main
+        style={{
+          marginLeft: `${sidebarWidth}px`,
+          transition: 'margin-left 0.2s ease',
+          padding: '28px 40px',
+          maxWidth: '1400px',
+        }}
+      >
+        <TopBar user={user} profileName={profileName} />
+
         {currentView === 'home' && (
-          <HomeView 
-            pacientes={pacientes}
-            onViewChange={(view) => {
-              if (view !== 'pacientes') {
-                setActivePatientId(null);
-              }
-              setCurrentView(view);
-            }}
-            onSelectPatient={handleSelectPatientFromHome}
-            profileName={profileName}
-          />
+          <HomeView user={user} onViewChange={changeView} />
         )}
 
         {(currentView === 'pacientes' || currentView === 'search') && (
-          <PacienteView 
-            pacientes={pacientes} 
+          <PacienteView
+            pacientes={pacientes}
             onDeletePaciente={handleDeletePaciente}
             token={token}
             mode={currentView === 'search' ? 'search' : 'list'}
             activePatientId={activePatientId}
             onClearActivePatient={() => setActivePatientId(null)}
             onAddNewPatient={() => setCurrentView('cadastro')}
-          /> 
-        )}
-
-        {currentView === 'cadastro' && (
-          <CadastroView 
-            onAddPaciente={handleAddPaciente} 
-            onVoltar={() => {
-              setActivePatientId(null);
-              setCurrentView('pacientes');
-            }} 
           />
         )}
 
-        {currentView !== 'home' && currentView !== 'pacientes' && currentView !== 'search' && currentView !== 'cadastro' && (
-          <div style={{ fontFamily: 'sans-serif', padding: '20px' }}>
-            <h1 style={{ color: '#1e3a8a', marginBottom: '10px' }}>{currentView.toUpperCase()}</h1>
-            <p style={{ color: '#64748b' }}>Esta tela está em desenvolvimento ou serve como demonstração.</p>
+        {currentView === 'cadastro' && (
+          <CadastroView
+            onAddPaciente={handleAddPaciente}
+            onVoltar={() => {
+              setActivePatientId(null);
+              setCurrentView('pacientes');
+            }}
+          />
+        )}
+
+        {placeholderTitle && (
+          <div style={{ fontFamily: 'system-ui, sans-serif' }}>
+            <h1 style={{ color: theme.colors.text, marginBottom: '8px' }}>{placeholderTitle}</h1>
+            <p style={{ color: theme.colors.textMuted }}>
+              Esta tela está prevista no plano de implementação e será construída pelo time.
+            </p>
           </div>
         )}
       </main>
