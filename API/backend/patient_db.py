@@ -57,7 +57,11 @@ def get_all_patients_info():
         patients_list.append({
             "id": patient_id,
             # Usa o nome do paciente ou um fallback se o nome não estiver disponível
-            "name": patient_data.get("name", f"Paciente {patient_id[:8]}") 
+            "name": patient_data.get("name", f"Paciente {patient_id[:8]}"),
+            # Incluímos cpf e gender já na listagem para que a tabela de pacientes
+            # do frontend possa exibi-los sem precisar de uma requisição por paciente.
+            "cpf": patient_data.get("cpf", "Não informado"),
+            "gender": patient_data.get("gender", "Não informado"),
         })
     return patients_list
 

@@ -26,3 +26,7 @@ API/backend/patients_db.json
 API/backend/users_db.json
 API/backend/__pycache__/
 
+# Python cache (qualquer subpasta) e binários grandes de demonstração
+__pycache__/
+*.pyc
+*.mp4
