@@ -1,11 +1,54 @@
 import React, { useState } from 'react';
-import { Search, RotateCcw, Plus, Eye, Edit2, Trash2, User, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, Eye, Edit2, Trash2, User, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function AtendimentoView({ pacientes }) {
   const [searchType, setSearchType] = useState('CPF');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Dados mocados idênticos aos exibidos na image_5e1bbf.jpg para efeito visual
+  // Estado para guardar o paciente encontrado na busca
+  const [pacienteSelecionado, setPacienteSelecionado] = useState(null);
+
+  // Função executada ao clicar em "Pesquisar"
+  const handleBuscar = () => {
+    if (!searchQuery.trim()) {
+      setPacienteSelecionado(null);
+      return;
+    }
+
+    // Procura no array global de pacientes enviado pelo App.jsx
+    const encontrado = pacientes.find((p) => {
+      if (searchType === 'CPF') {
+        // Remove pontos e traços para comparar apenas os números limpos
+        return p.cpf?.replace(/\D/g, '') === searchQuery.replace(/\D/g, '');
+      } else {
+        return p.nome?.toLowerCase().includes(searchQuery.toLowerCase());
+      }
+    });
+
+    if (encontrado) {
+      setPacienteSelecionado(encontrado);
+    } else {
+      alert('Paciente não encontrado!');
+      setPacienteSelecionado(null);
+    }
+  };
+
+  const handleLimpar = () => {
+    setSearchQuery('');
+    setPacienteSelecionado(null);
+  };
+
+  // Pega as iniciais do nome para o círculo roxo (ex: "Maria Silva" -> "MS")
+  const getIniciais = (nome) => {
+    if (!nome) return '??';
+    const partes = nome.split(' ');
+    if (partes.length > 1) {
+      return (partes[0][0] + partes[1][0]).toUpperCase();
+    }
+    return partes[0][0].toUpperCase();
+  };
+
+  // Dados mocados idênticos aos exibidos na imagem para efeito visual
   const historicoExemplo = [
     { id: 1, data: '08/05/2025 - 10:30', especialidade: 'Clínica Geral', medico: 'Dr. Rafael Menezes' },
     { id: 2, data: '15/04/2025 - 14:20', especialidade: 'Neurologia', medico: 'Dra. Juliana Costa' },
@@ -39,19 +82,19 @@ export default function AtendimentoView({ pacientes }) {
       <div style={styles.card}>
         <h3 style={styles.cardTitle}>Buscar paciente</h3>
         <div style={styles.searchRow}>
-          <select 
-            value={searchType} 
-            onChange={(e) => setSearchType(e.target.value)} 
+          <select
+            value={searchType}
+            onChange={(e) => setSearchType(e.target.value)}
             style={styles.selectInput}
           >
             <option value="CPF">CPF</option>
             <option value="Nome">Nome</option>
           </select>
-          
+
           <div style={styles.inputWrapper}>
-            <input 
-              type="text" 
-              placeholder="Digite o nome ou CPF do paciente" 
+            <input
+              type="text"
+              placeholder="Digite o nome ou CPF do paciente"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={styles.textInput}
@@ -59,80 +102,148 @@ export default function AtendimentoView({ pacientes }) {
             <Search size={18} color="#94a3b8" style={styles.searchIconInside} />
           </div>
 
-          <button style={styles.btnSearch}>
+          <button onClick={handleBuscar} style={styles.btnSearch}>
             <Search size={16} style={{ marginRight: '6px' }} /> Pesquisar
           </button>
-          <button style={styles.btnClear}>Limpar</button>
+          <button onClick={handleLimpar} style={styles.btnClear}>
+            Limpar
+          </button>
         </div>
       </div>
 
       {/* Seção 2: Info do Paciente Selecionado */}
-      <div style={styles.card}>
-        <div style={styles.patientProfileRow}>
-          <div style={styles.patientLeftInfo}>
-            <div style={styles.avatarCircle}>MS</div>
-            <div>
-              <h4 style={styles.patientName}>Maria Silva</h4>
-              <div style={styles.patientMetaRow}>
-                <span style={styles.metaItem}>♀ Feminino</span>
-                <span style={styles.metaDot}>•</span>
-                <span style={styles.metaItem}>32 anos</span>
-                <span style={styles.metaDot}>•</span>
-                <span style={styles.metaItem}>CPF 123.456.789-00</span>
+      {pacienteSelecionado ? (
+        <div style={styles.card}>
+          <div style={styles.patientProfileRow}>
+            <div style={styles.patientLeftInfo}>
+              <div style={styles.avatarCircle}>
+                {getIniciais(pacienteSelecionado.nome)}
+              </div>
+              <div>
+                <h4 style={styles.patientName}>{pacienteSelecionado.nome}</h4>
+                <div style={styles.patientMetaRow}>
+                  <span style={styles.metaItem}>
+                    {pacienteSelecionado.sexo === 'M' || pacienteSelecionado.sexo?.toLowerCase() === 'masculino'
+                      ? '♂ Masculino'
+                      : '♀ Feminino'}
+                  </span>
+                  <span style={styles.metaDot}>•</span>
+                  <span style={styles.metaItem}>{pacienteSelecionado.idade}</span>
+                  <span style={styles.metaDot}>•</span>
+                  <span style={styles.metaItem}>CPF {pacienteSelecionado.cpf}</span>
+                </div>
               </div>
             </div>
+            <button style={styles.btnOutlineProfile}>
+              <User size={16} style={{ marginRight: '8px' }} />
+              Ver perfil do paciente
+            </button>
           </div>
-          <button style={styles.btnOutlineProfile}>
-            <User size={16} style={{ marginRight: '8px' }} />
-            Ver perfil do paciente
-          </button>
         </div>
-      </div>
+      ) : (
+        <div style={{ ...styles.card, textAlign: 'center', color: '#64748b', fontSize: '14px' }}>
+          Nenhum paciente selecionado. Busque por Nome ou CPF acima.
+        </div>
+      )}
 
       {/* Seção 3: Tabela de Atendimentos */}
       <div style={styles.cardTable}>
-        <h3 style={{ ...styles.cardTitle, padding: '20px 20px 10px 20px' }}>Atendimentos do paciente</h3>
-        
+        <h3 style={{ ...styles.cardTitle, padding: '20px 20px 10px 20px' }}>
+          Atendimentos do paciente
+        </h3>
+
         <table style={styles.table}>
           <thead>
             <tr style={styles.tableHeaderRow}>
               <th style={styles.th}>Data ↑↓</th>
               <th style={styles.th}>Especialidade ↑↓</th>
-              <th style={{ ...styles.th, textAlign: 'right', paddingRight: '40px' }}>Ações</th>
+              <th style={{ ...styles.th, textAlign: 'right', paddingRight: '40px' }}>
+                Ações
+              </th>
             </tr>
           </thead>
           <tbody>
-            {historicoExemplo.map((item) => (
-              <tr key={item.id} style={styles.tableBodyRow}>
-                <td style={styles.td}>{item.data}</td>
-                <td style={styles.td}>
-                  <span style={{ fontWeight: '500', color: '#1e293b' }}>{item.especialidade}</span>
-                  <span style={{ color: '#94a3b8', marginLeft: '30px' }}>{item.medico}</span>
-                </td>
-                <td style={styles.tdActions}>
-                  <button style={styles.actionIconBtn} title="Visualizar"><Eye size={16} color="#0046fe" /></button>
-                  <button style={styles.actionIconBtn} title="Editar"><Edit2 size={16} color="#0046fe" /></button>
-                  <button style={{ ...styles.actionIconBtn, borderColor: '#fee2e2' }} title="Excluir"><Trash2 size={16} color="#ef4444" /></button>
+            {pacienteSelecionado && pacienteSelecionado.atendimentos?.length > 0 ? (
+              pacienteSelecionado.atendimentos.map((item) => (
+                <tr key={item.id} style={styles.tableBodyRow}>
+                  <td style={styles.td}>{item.data}</td>
+                  <td style={styles.td}>
+                    <span style={{ fontWeight: '500', color: '#1e293b' }}>
+                      {item.especialidade}
+                    </span>
+                    <span style={{ color: '#94a3b8', marginLeft: '30px' }}>
+                      {item.medico}
+                    </span>
+                  </td>
+                  <td style={styles.tdActions}>
+                    <button style={styles.actionIconBtn} title="Visualizar">
+                      <Eye size={16} color="#0046fe" />
+                    </button>
+                    <button style={styles.actionIconBtn} title="Editar">
+                      <Edit2 size={16} color="#0046fe" />
+                    </button>
+                    <button style={{ ...styles.actionIconBtn, borderColor: '#fee2e2' }} title="Excluir">
+                      <Trash2 size={16} color="#ef4444" />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : pacienteSelecionado ? (
+              // Se o paciente foi selecionado mas não tem atendimentos na lista dele, exibe o histórico de exemplo (mock)
+              historicoExemplo.map((item) => (
+                <tr key={item.id} style={styles.tableBodyRow}>
+                  <td style={styles.td}>{item.data}</td>
+                  <td style={styles.td}>
+                    <span style={{ fontWeight: '500', color: '#1e293b' }}>
+                      {item.especialidade}
+                    </span>
+                    <span style={{ color: '#94a3b8', marginLeft: '30px' }}>
+                      {item.medico}
+                    </span>
+                  </td>
+                  <td style={styles.tdActions}>
+                    <button style={styles.actionIconBtn} title="Visualizar">
+                      <Eye size={16} color="#0046fe" />
+                    </button>
+                    <button style={styles.actionIconBtn} title="Editar">
+                      <Edit2 size={16} color="#0046fe" />
+                    </button>
+                    <button style={{ ...styles.actionIconBtn, borderColor: '#fee2e2' }} title="Excluir">
+                      <Trash2 size={16} color="#ef4444" />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="3" style={{ ...styles.td, textAlign: 'center', color: '#94a3b8', padding: '30px' }}>
+                  Nenhum histórico de atendimento encontrado para este paciente.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
 
         {/* Rodapé / Paginação */}
         <div style={styles.paginationRow}>
           <span style={styles.paginationCount}>1 – 5 de 15 resultados</span>
-          
+
           <div style={styles.paginationControls}>
             <select style={styles.perPageSelect} defaultValue="10">
               <option value="10">10 por página</option>
               <option value="20">20 por página</option>
             </select>
-            
-            <button style={styles.pageArrowBtn}><ChevronLeft size={16} /></button>
-            <button style={{ ...styles.pageNumberBtn, ...styles.pageNumberActive }}>1</button>
+
+            <button style={styles.pageArrowBtn}>
+              <ChevronLeft size={16} />
+            </button>
+            <button style={{ ...styles.pageNumberBtn, ...styles.pageNumberActive }}>
+              1
+            </button>
             <button style={styles.pageNumberBtn}>2</button>
-            <button style={styles.pageArrowBtn}><ChevronRight size={16} /></button>
+            <button style={styles.pageArrowBtn}>
+              <ChevronRight size={16} />
+            </button>
           </div>
         </div>
       </div>
