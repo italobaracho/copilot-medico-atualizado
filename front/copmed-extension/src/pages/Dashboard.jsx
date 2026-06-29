@@ -1,21 +1,17 @@
-import { useState } from "react";
-
 import {
-  FiBell,
-  FiHome,
   FiUsers,
   FiCalendar,
   FiClipboard,
   FiFolder,
-  FiBarChart2,
-  FiSettings,
   FiTrendingUp,
 } from "react-icons/fi";
 
 import { BsClockHistory } from "react-icons/bs";
+import Sidebar from "../components/Sidebar";
+import TopHeader from "../components/TopHeader";
 
-function Dashboard({ setPaginaAtual }) {
-  const [menuFechado, setMenuFechado] = useState(false);
+function Dashboard({ setPaginaAtual, usuarioLogado }) {
+  const nomeUsuario = usuarioLogado?.nome || "Usuário";
 
   const pacientes = [
     { id: 1, nome: "Maria Silva", ativo: true, novoMes: true },
@@ -54,24 +50,6 @@ function Dashboard({ setPaginaAtual }) {
       status: "Em andamento",
       hoje: true,
     },
-    {
-      id: 4,
-      horario: "14:00",
-      paciente: "Pedro Carvalho",
-      tipo: "Consulta",
-      especialidade: "Ortopedia",
-      status: "Confirmado",
-      hoje: true,
-    },
-    {
-      id: 5,
-      horario: "15:30",
-      paciente: "Larissa Santos",
-      tipo: "Retorno",
-      especialidade: "Dermatologia",
-      status: "Confirmado",
-      hoje: true,
-    },
   ];
 
   const atendimentos = [
@@ -79,10 +57,6 @@ function Dashboard({ setPaginaAtual }) {
     { id: 2, especialidade: "Clínica Geral" },
     { id: 3, especialidade: "Cardiologia" },
     { id: 4, especialidade: "Endocrinologia" },
-    { id: 5, especialidade: "Outros" },
-    { id: 6, especialidade: "Cardiologia" },
-    { id: 7, especialidade: "Clínica Geral" },
-    { id: 8, especialidade: "Outros" },
   ];
 
   const analisesIA = [
@@ -115,10 +89,19 @@ function Dashboard({ setPaginaAtual }) {
     },
   ];
 
+  const notificacoes = atividades.map((atividade) => ({
+    id: atividade.id,
+    titulo: atividade.titulo,
+    descricao: `Paciente: ${atividade.paciente}`,
+    data: atividade.horario,
+  }));
+
   const consultasHoje = consultas.filter((consulta) => consulta.hoje);
+
   const consultasConfirmadas = consultasHoje.filter(
     (consulta) => consulta.status === "Confirmado"
   );
+
   const consultasEmAndamento = consultasHoje.filter(
     (consulta) => consulta.status === "Em andamento"
   );
@@ -136,101 +119,22 @@ function Dashboard({ setPaginaAtual }) {
   const totalAtendimentos = atendimentos.length;
 
   function buscarIconeAtividade(tipo) {
-    if (tipo === "ia") {
-      return <FiTrendingUp />;
-    }
-
-    if (tipo === "atendimento") {
-      return <FiClipboard />;
-    }
-
+    if (tipo === "ia") return <FiTrendingUp />;
+    if (tipo === "atendimento") return <FiClipboard />;
     return <FiFolder />;
   }
 
   return (
     <div className="page-container">
-      <aside className={`sidebar ${menuFechado ? "collapsed" : ""}`}>
-        <div>
-          <div className="logo">
-            <div className="logo-icon">
-              <FiUsers />
-            </div>
-            {!menuFechado && <h2>Copilot Médico</h2>}
-          </div>
-
-          <nav>
-            <ul>
-              <li className="active" onClick={() => setPaginaAtual("dashboard")}>
-                <FiHome />
-                {!menuFechado && "Dashboard"}
-              </li>
-
-              <li onClick={() => setPaginaAtual("pacientes")}>
-                <FiUsers />
-                {!menuFechado && "Pacientes"}
-              </li>
-
-              <li>
-                <FiCalendar />
-                {!menuFechado && "Agendamentos"}
-              </li>
-
-              <li>
-                <BsClockHistory />
-                {!menuFechado && "Análise com IA"}
-              </li>
-
-              <li>
-                <FiClipboard />
-                {!menuFechado && "Atendimentos"}
-              </li>
-
-              <li>
-                <FiFolder />
-                {!menuFechado && "Prontuários"}
-              </li>
-
-              <li>
-                <FiBarChart2 />
-                {!menuFechado && "Relatórios"}
-              </li>
-
-              <li>
-                <FiSettings />
-                {!menuFechado && "Configurações"}
-              </li>
-            </ul>
-          </nav>
-        </div>
-
-        <button
-          className="recolher-menu"
-          onClick={() => setMenuFechado(!menuFechado)}
-        >
-          <span>{menuFechado ? ">" : "<"}</span>
-          {!menuFechado && "Recolher menu"}
-        </button>
-      </aside>
+      <Sidebar paginaAtual="dashboard" setPaginaAtual={setPaginaAtual} />
 
       <main className="content">
-        <div className="top-header">
-          <div>
-            <h1>Olá, Dr. Rafael Menezes 👋</h1>
-            <p>Aqui está um resumo do que acontece na sua clínica hoje.</p>
-          </div>
-
-          <div className="user-area">
-            <div className="notification-box">
-              <FiBell size={20} />
-              <span className="notification-badge">{atividades.length}</span>
-            </div>
-
-            <div>
-              <strong>Dr. Rafael Menezes</strong>
-              <p>Clínica Exemplo</p>
-            </div>
-          </div>
-        </div>
+        <TopHeader
+          titulo={`Olá, ${nomeUsuario} 👋`}
+          descricao="Aqui está um resumo do que acontece na sua clínica hoje."
+          usuarioLogado={usuarioLogado}
+          notificacoes={notificacoes}
+        />
 
         <div className="dashboard-cards">
           <div className="dashboard-card">
@@ -291,10 +195,6 @@ function Dashboard({ setPaginaAtual }) {
                 </span>
               </div>
             ))}
-
-            <button className="link-dashboard">
-              Ver todos os agendamentos
-            </button>
           </section>
 
           <section className="dashboard-box">
@@ -312,10 +212,6 @@ function Dashboard({ setPaginaAtual }) {
                 <span>{atividade.horario}</span>
               </div>
             ))}
-
-            <button className="link-dashboard">
-              Ver todas as atividades
-            </button>
           </section>
         </div>
 

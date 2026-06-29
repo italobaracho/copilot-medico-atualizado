@@ -1,24 +1,11 @@
 import { useState } from "react";
 
-import {
-  FiSearch,
-  FiBell,
-  FiEdit,
-  FiEye,
-  FiTrash2,
-  FiHome,
-  FiUsers,
-  FiCalendar,
-  FiClipboard,
-  FiFolder,
-  FiBarChart2,
-  FiSettings,
-} from "react-icons/fi";
+import { FiSearch, FiEdit, FiEye, FiTrash2 } from "react-icons/fi";
 
-import { BsClockHistory } from "react-icons/bs";
+import Sidebar from "../components/Sidebar";
+import TopHeader from "../components/TopHeader";
 
-function Pacientes({ setPaginaAtual }) {
-  const [menuFechado, setMenuFechado] = useState(false);
+function Pacientes({ setPaginaAtual, usuarioLogado }) {
   const [tipoBusca, setTipoBusca] = useState("CPF");
   const [termoBusca, setTermoBusca] = useState("");
   const [buscou, setBuscou] = useState(false);
@@ -42,6 +29,13 @@ function Pacientes({ setPaginaAtual }) {
       genero: "Feminino",
     },
   ]);
+
+  const notificacoes = pacientes.slice(-5).reverse().map((paciente) => ({
+    id: paciente.cpf,
+    titulo: "Paciente cadastrado",
+    descricao: paciente.nome,
+    data: paciente.cpf,
+  }));
 
   const termoNormalizado = termoBusca.trim().toLowerCase();
 
@@ -100,9 +94,7 @@ function Pacientes({ setPaginaAtual }) {
       "Tem certeza que deseja excluir este paciente?"
     );
 
-    if (!confirmar) {
-      return;
-    }
+    if (!confirmar) return;
 
     setPacientes(pacientes.filter((paciente) => paciente.cpf !== cpf));
     setPacienteSelecionado(null);
@@ -112,89 +104,15 @@ function Pacientes({ setPaginaAtual }) {
 
   return (
     <div className="page-container">
-      <aside className={`sidebar ${menuFechado ? "collapsed" : ""}`}>
-        <div>
-          <div className="logo">
-            <div className="logo-icon">
-              <FiUsers />
-            </div>
-
-            {!menuFechado && <h2>Copilot Médico</h2>}
-          </div>
-
-          <nav>
-            <ul>
-              <li onClick={() => setPaginaAtual("dashboard")}>
-                <FiHome />
-                {!menuFechado && "Dashboard"}
-              </li>
-
-              <li className="active" onClick={() => setPaginaAtual("pacientes")}>
-                <FiUsers />
-                {!menuFechado && "Pacientes"}
-              </li>
-
-              <li>
-                <FiCalendar />
-                {!menuFechado && "Agendamentos"}
-              </li>
-
-              <li>
-                <BsClockHistory />
-                {!menuFechado && "Análise com IA"}
-              </li>
-
-              <li>
-                <FiClipboard />
-                {!menuFechado && "Atendimentos"}
-              </li>
-
-              <li>
-                <FiFolder />
-                {!menuFechado && "Prontuários"}
-              </li>
-
-              <li>
-                <FiBarChart2 />
-                {!menuFechado && "Relatórios"}
-              </li>
-
-              <li>
-                <FiSettings />
-                {!menuFechado && "Configurações"}
-              </li>
-            </ul>
-          </nav>
-        </div>
-
-        <button
-          className="recolher-menu"
-          onClick={() => setMenuFechado(!menuFechado)}
-        >
-          <span>{menuFechado ? ">" : "<"}</span>
-          {!menuFechado && "Recolher menu"}
-        </button>
-      </aside>
+      <Sidebar paginaAtual="pacientes" setPaginaAtual={setPaginaAtual} />
 
       <main className="content">
-        <div className="top-header">
-          <div>
-            <h1>Pacientes</h1>
-            <p>Consulte e gerencie as informações dos pacientes.</p>
-          </div>
-
-          <div className="user-area">
-            <div className="notification-box">
-              <FiBell size={20} />
-              <span className="notification-badge">3</span>
-            </div>
-
-            <div>
-              <strong>Dr. Rafael Menezes</strong>
-              <p>Clínica Exemplo</p>
-            </div>
-          </div>
-        </div>
+        <TopHeader
+          titulo="Pacientes"
+          descricao="Consulte e gerencie as informações dos pacientes."
+          usuarioLogado={usuarioLogado}
+          notificacoes={notificacoes}
+        />
 
         <div className="breadcrumb">Home &gt; Pacientes</div>
 

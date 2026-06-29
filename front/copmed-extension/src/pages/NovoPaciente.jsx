@@ -1,23 +1,10 @@
 import { useState } from "react";
 
-import {
-  FiBell,
-  FiHome,
-  FiUsers,
-  FiCalendar,
-  FiClipboard,
-  FiFolder,
-  FiBarChart2,
-  FiSettings,
-  FiArrowLeft,
-  FiSave,
-} from "react-icons/fi";
+import { FiArrowLeft, FiSave } from "react-icons/fi";
+import Sidebar from "../components/Sidebar";
+import TopHeader from "../components/TopHeader";
 
-import { BsClockHistory } from "react-icons/bs";
-
-function NovoPaciente({ setPaginaAtual }) {
-  const [menuFechado, setMenuFechado] = useState(false);
-
+function NovoPaciente({ setPaginaAtual, usuarioLogado }) {
   const [formulario, setFormulario] = useState({
     nome: "",
     cpf: "",
@@ -31,6 +18,17 @@ function NovoPaciente({ setPaginaAtual }) {
 
   const [pacienteSalvo, setPacienteSalvo] = useState(false);
 
+  const notificacoes = pacienteSalvo
+    ? [
+        {
+          id: "paciente-salvo",
+          titulo: "Paciente cadastrado com sucesso",
+          descricao: formulario.nome,
+          data: formulario.cpf,
+        },
+      ]
+    : [];
+
   function atualizarCampo(evento) {
     const { name, value } = evento.target;
 
@@ -38,6 +36,8 @@ function NovoPaciente({ setPaginaAtual }) {
       ...formulario,
       [name]: value,
     });
+
+    setPacienteSalvo(false);
   }
 
   function salvarPaciente(evento) {
@@ -53,89 +53,15 @@ function NovoPaciente({ setPaginaAtual }) {
 
   return (
     <div className="page-container">
-      <aside className={`sidebar ${menuFechado ? "collapsed" : ""}`}>
-        <div>
-          <div className="logo">
-            <div className="logo-icon">
-              <FiUsers />
-            </div>
-
-            {!menuFechado && <h2>Copilot Médico</h2>}
-          </div>
-
-          <nav>
-            <ul>
-              <li onClick={() => setPaginaAtual("dashboard")}>
-                <FiHome />
-                {!menuFechado && "Dashboard"}
-              </li>
-
-              <li className="active" onClick={() => setPaginaAtual("pacientes")}>
-                <FiUsers />
-                {!menuFechado && "Pacientes"}
-              </li>
-
-              <li>
-                <FiCalendar />
-                {!menuFechado && "Agendamentos"}
-              </li>
-
-              <li>
-                <BsClockHistory />
-                {!menuFechado && "Análise com IA"}
-              </li>
-
-              <li>
-                <FiClipboard />
-                {!menuFechado && "Atendimentos"}
-              </li>
-
-              <li>
-                <FiFolder />
-                {!menuFechado && "Prontuários"}
-              </li>
-
-              <li>
-                <FiBarChart2 />
-                {!menuFechado && "Relatórios"}
-              </li>
-
-              <li>
-                <FiSettings />
-                {!menuFechado && "Configurações"}
-              </li>
-            </ul>
-          </nav>
-        </div>
-
-        <button
-          className="recolher-menu"
-          onClick={() => setMenuFechado(!menuFechado)}
-        >
-          <span>{menuFechado ? ">" : "<"}</span>
-          {!menuFechado && "Recolher menu"}
-        </button>
-      </aside>
+      <Sidebar paginaAtual="pacientes" setPaginaAtual={setPaginaAtual} />
 
       <main className="content">
-        <div className="top-header">
-          <div>
-            <h1>Novo paciente</h1>
-            <p>Cadastre as informações principais do paciente.</p>
-          </div>
-
-          <div className="user-area">
-            <div className="notification-box">
-              <FiBell size={20} />
-              <span className="notification-badge">3</span>
-            </div>
-
-            <div>
-              <strong>Dr. Rafael Menezes</strong>
-              <p>Clínica Exemplo</p>
-            </div>
-          </div>
-        </div>
+        <TopHeader
+          titulo="Novo paciente"
+          descricao="Cadastre as informações principais do paciente."
+          usuarioLogado={usuarioLogado}
+          notificacoes={notificacoes}
+        />
 
         <div className="breadcrumb">
           Home &gt; Pacientes &gt; Novo paciente
@@ -153,8 +79,7 @@ function NovoPaciente({ setPaginaAtual }) {
 
           {pacienteSalvo && (
             <div className="alerta-sucesso">
-              Paciente cadastrado com sucesso! Volte para a tela de pacientes
-              para consultar a listagem.
+              Paciente cadastrado com sucesso!
             </div>
           )}
 
@@ -243,7 +168,7 @@ function NovoPaciente({ setPaginaAtual }) {
                 <label>Observações</label>
                 <textarea
                   name="observacoes"
-                  placeholder="Digite observações importantes sobre o paciente"
+                  placeholder="Digite observações importantes"
                   value={formulario.observacoes}
                   onChange={atualizarCampo}
                 />
