@@ -15,11 +15,12 @@ import theme from '../theme';
 // ============================================================
 
 // TODO BACKEND: substituir por GET /api/dashboard/stats
+// "target" = para qual tela o card navega ao ser clicado.
 const stats = [
-  { label: 'Consultas hoje',       value: '12',  sub: '4 confirmadas · 2 em andamento', icon: Calendar,      color: theme.colors.primary, bg: theme.colors.primarySoft },
-  { label: 'Pacientes ativos',     value: '842', sub: '+18 novos este mês',             icon: Users,         color: '#15803d',            bg: '#f0fdf4' },
-  { label: 'Atendimentos este mês', value: '156', sub: '+12% vs mês anterior',          icon: ClipboardList, color: '#7e22ce',            bg: '#faf5ff' },
-  { label: 'Análises com IA',      value: '48',  sub: '+30% vs mês anterior',           icon: Sparkles,      color: '#c2410c',            bg: '#fff7ed' },
+  { label: 'Consultas hoje',       value: '12',  sub: '4 confirmadas · 2 em andamento', icon: Calendar,      color: theme.colors.primary, bg: theme.colors.primarySoft, target: 'agendamentos' },
+  { label: 'Pacientes ativos',     value: '842', sub: '+18 novos este mês',             icon: Users,         color: '#15803d',            bg: '#f0fdf4', target: 'pacientes' },
+  { label: 'Atendimentos este mês', value: '156', sub: '+12% vs mês anterior',          icon: ClipboardList, color: '#7e22ce',            bg: '#faf5ff', target: 'pacientes' },
+  { label: 'Análises com IA',      value: '48',  sub: '+30% vs mês anterior',           icon: Sparkles,      color: '#c2410c',            bg: '#fff7ed', target: 'analise-ia' },
 ];
 
 // TODO BACKEND: substituir por GET /api/agenda?date=hoje
@@ -78,7 +79,13 @@ export default function HomeView({ user, onViewChange }) {
         {stats.map((s) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} style={styles.statCard}>
+            <div
+              key={s.label}
+              style={{ ...styles.statCard, cursor: 'pointer' }}
+              onClick={() => onViewChange && onViewChange(s.target)}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = theme.shadow.cardHover; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = theme.shadow.card; }}
+            >
               <div style={{ ...styles.statIcon, backgroundColor: s.bg }}>
                 <Icon size={22} color={s.color} />
               </div>

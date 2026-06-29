@@ -1,4 +1,5 @@
 import os
+import json
 from groq import Groq
 from . import patient_db
 
@@ -56,3 +57,67 @@ def send_message(patient_id: str, consultation_id: str, message_text: str) -> st
     except Exception as e:
         print(f"Erro ao enviar mensagem para a API Groq para paciente {patient_id}, consulta {consultation_id}: {e}")
         return f"Desculpe, ocorreu um erro de comunicação com a IA do Groq: {str(e)}"
+
+
+# Estrutura (schema) que pedimos ao modelo para preencher.
+# Mantemos o frontend e o backend de acordo com este formato.
+ANALISE_SCHEMA_EXEMPLO = {
+    "laudo": {"numero": "LAB-2025-000123", "data_emissao": "", "laboratorio": "Clínica Exemplo - Laboratório Central"},
+    "resultados": [
+        {
+            "grupo": "HEMOGRAMA COMPLETO",
+            "itens": [
+                {"exame": "Hemoglobina", "resultado": "13,2", "unidade": "g/dL", "referencia": "12,0 - 15,5", "status": "Normal"}
+            ],
+        }
+    ],
+    "descritivo": "Texto corrido interpretando os achados.",
+    "hipoteses": [
+        {"titulo": "Infecção bacteriana aguda", "descricao": "Justificativa breve.", "probabilidade": 68, "mais_provavel": True}
+    ],
+    "orientacoes": ["Correlacionar com a avaliação clínica."],
+}
+
+
+def gerar_analise_laboratorial(contexto_clinico: str) -> dict:
+    """
+    Usa o Groq para transformar um texto clínico/laboratorial (transcrições,
+    resultados de exames colados, PDFs já extraídos) em um LAUDO ESTRUTURADO em JSON,
+    pronto para a tela "Análise com IA".
+
+    Retorna um dicionário com as chaves: laudo, resultados, descritivo, hipoteses, orientacoes.
+    """
+    prompt = f"""Você é um assistente médico de apoio à decisão clínica.
+Analise os DADOS CLÍNICOS abaixo e produza um laudo laboratorial estruturado.
+
+Responda EXCLUSIVAMENTE com um JSON válido (sem comentários, sem texto fora do JSON),
+seguindo EXATAMENTE esta estrutura de chaves:
+
+{json.dumps(ANALISE_SCHEMA_EXEMPLO, ensure_ascii=False, indent=2)}
+
+REGRAS IMPORTANTES:
+- "status" de cada item deve ser exatamente "Normal", "Atenção" ou "Crítico".
+- "probabilidade" é um número inteiro de 0 a 100; a soma das hipóteses deve ficar próxima de 100.
+- Marque "mais_provavel": true apenas na hipótese de maior probabilidade.
+- Se NÃO houver dados laboratoriais suficientes, devolva "resultados" como lista vazia,
+  "hipoteses" vazia, e escreva no "descritivo" que não há dados suficientes para o laudo.
+- As "orientacoes" não substituem o julgamento clínico; deixe isso implícito sendo prudente.
+- Escreva tudo em português do Brasil.
+
+DADOS CLÍNICOS:
+\"\"\"{contexto_clinico}\"\"\"
+"""
+
+    completion = client.chat.completions.create(
+        model=MODEL_NAME,
+        messages=[
+            {"role": "system", "content": system_instruction_content},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.2,
+        max_tokens=4096,
+        response_format={"type": "json_object"},
+    )
+
+    raw = completion.choices[0].message.content
+    return json.loads(raw)
