@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Search, User, ArrowLeft, Stethoscope,
   FlaskConical, FileText, Download, ChevronRight, ChevronLeft, Play,
-  Send, Sparkles, FileUp, Loader2, Plus, Eye, Pencil, Trash2
+  Send, Sparkles, FileUp, Loader2, Plus, Eye, Pencil, Trash2, Mic, Square
 } from 'lucide-react';
 import theme from '../theme';
 import { API_URL } from '../api';
+import { blobToWav } from '../utils/wav';
 
 export default function PacientesView({ pacientes, onDeletePaciente, token, mode = 'list', activePatientId, onClearActivePatient, onAddNewPatient }) {
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -33,6 +34,13 @@ export default function PacientesView({ pacientes, onDeletePaciente, token, mode
   const [sendingMessage, setSendingMessage] = useState(false);
   const [recommendationLoading, setRecommendationLoading] = useState(false);
   const [pdfUploading, setPdfUploading] = useState(false);
+
+  // Estados/refs da gravação de voz (Assistente IA)
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const mediaStreamRef = useRef(null);
 
   // Termo normalizado usado pela busca central (modo 'search')
   const termoNormalizado = termoBusca.trim().toLowerCase();
@@ -227,6 +235,74 @@ export default function PacientesView({ pacientes, onDeletePaciente, token, mode
       alert('Erro de conexão ao enviar o PDF de exame.');
     } finally {
       setPdfUploading(false);
+    }
+  };
+
+  // Envia o áudio gravado para o backend transcrever e coloca o texto no campo de mensagem
+  const transcribeRecording = async (recordedBlob) => {
+    setIsTranscribing(true);
+    try {
+      const { wav, duration } = await blobToWav(recordedBlob);
+      const formData = new FormData();
+      formData.append('audio_file', wav, 'gravacao.wav');
+      formData.append('patient_id', selectedPatient.id);
+      formData.append('consultation_id', selectedConsultation.id);
+      formData.append('duration', String(duration || 0));
+
+      const response = await fetch(`${API_URL}/api/transcribe_audio`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const data = await response.json();
+      if (response.ok && data.status === 'success' && !data.is_error) {
+        // Coloca a transcrição no campo de mensagem para o médico revisar antes de enviar
+        setNewMessage((prev) => (prev ? `${prev} ${data.transcription}` : data.transcription));
+        loadChatHistory(selectedPatient.id, selectedConsultation.id);
+      } else {
+        alert('Não foi possível transcrever o áudio: ' + (data.transcription || data.message || 'tente novamente em local silencioso.'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao processar a gravação de áudio.');
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  // Inicia a captura do microfone
+  const startRecording = async () => {
+    if (!selectedConsultation) {
+      alert('Selecione um atendimento antes de gravar.');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      audioChunksRef.current = [];
+      const recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        // Encerra o microfone
+        mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+        mediaStreamRef.current = null;
+        if (blob.size > 0) transcribeRecording(blob);
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível acessar o microfone. Verifique a permissão do navegador.');
+    }
+  };
+
+  // Para a gravação (o onstop dispara a transcrição)
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
     }
   };
 
@@ -764,16 +840,36 @@ export default function PacientesView({ pacientes, onDeletePaciente, token, mode
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <label style={styles.iconBtnLabel} title="Enviar PDF de exame">
                       <FileUp size={18} color="#475569" />
-                      <input 
-                        type="file" 
-                        accept=".pdf" 
-                        onChange={handleUploadPDF} 
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleUploadPDF}
                         style={{ display: 'none' }}
                         disabled={pdfUploading}
                       />
                     </label>
-                    <button 
-                      type="submit" 
+
+                    {/* Botão de gravação de voz: grava no navegador e transcreve via backend */}
+                    <button
+                      type="button"
+                      onClick={isRecording ? stopRecording : startRecording}
+                      disabled={isTranscribing || sendingMessage}
+                      title={isRecording ? 'Parar e transcrever' : 'Gravar áudio do atendimento'}
+                      style={{
+                        ...styles.iconBtnLabel,
+                        backgroundColor: isRecording ? '#fee2e2' : '#f1f5f9',
+                        cursor: (isTranscribing || sendingMessage) ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {isTranscribing
+                        ? <Loader2 size={18} className="animate-spin" color="#475569" />
+                        : isRecording
+                          ? <Square size={18} color="#dc2626" />
+                          : <Mic size={18} color="#475569" />}
+                    </button>
+
+                    <button
+                      type="submit"
                       style={styles.sendBtn}
                       disabled={!newMessage.trim() || sendingMessage || chatLoading}
                     >
@@ -786,6 +882,20 @@ export default function PacientesView({ pacientes, onDeletePaciente, token, mode
                   <div style={{ color: '#0046fe', fontSize: '12px', padding: '8px 12px', backgroundColor: '#eff6ff', borderRadius: '8px', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Loader2 size={14} className="animate-spin" />
                     Enviando e processando laudo em PDF...
+                  </div>
+                )}
+
+                {isRecording && (
+                  <div style={{ color: '#dc2626', fontSize: '12px', padding: '8px 12px', backgroundColor: '#fee2e2', borderRadius: '8px', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#dc2626' }} className="animate-spin" />
+                    Gravando... clique no quadrado para parar e transcrever.
+                  </div>
+                )}
+
+                {isTranscribing && (
+                  <div style={{ color: '#0046fe', fontSize: '12px', padding: '8px 12px', backgroundColor: '#eff6ff', borderRadius: '8px', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Loader2 size={14} className="animate-spin" />
+                    Transcrevendo o áudio...
                   </div>
                 )}
               </div>

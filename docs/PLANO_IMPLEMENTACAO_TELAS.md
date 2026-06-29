@@ -28,6 +28,19 @@ Branch: **`feature/ui-telas-referencia`** → mesclada em **`dev`**.
 > (dados fixos), conforme combinado. Os pontos para ligar ao backend estão
 > marcados no código com o comentário `// TODO BACKEND`.
 
+### Gravação de voz (frontend) — agora utilizável
+Antes, a gravação existia **só no backend** (`POST /api/transcribe_audio`), sem
+botão na tela. Foi adicionado um **microfone no chat do Assistente IA** do paciente
+(`src/components/PacienteView.jsx`), que:
+1. grava pelo navegador (`MediaRecorder`);
+2. converte para WAV (`src/utils/wav.js`) — formato que o backend transcreve melhor;
+3. envia para `/api/transcribe_audio` e coloca a transcrição no campo de mensagem
+   para o médico revisar antes de enviar.
+
+> Observação: como o modelo **Vosk** não está embarcado no container, a transcrição
+> usa o fallback do Google (precisa de internet). Para diarização (Médico/Paciente),
+> baixar o modelo para `API/backend/vosk-model-small-pt-0.3/`.
+
 ---
 
 ## 2. O que falta — tela "Análise com IA / Laudo Laboratorial" (imagens 8 a 11)
