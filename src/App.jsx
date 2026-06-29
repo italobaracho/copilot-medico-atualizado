@@ -4,6 +4,7 @@ import PacienteView from './components/PacienteView';
 import CadastroView from './components/CadastroView';
 import Login from './components/Login';
 import HomeView from './components/HomeView';
+import AtendimentoView from './components/AtendimentoView';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
@@ -185,6 +186,12 @@ function App() {
               setActivePatientId(null);
               setCurrentView('pacientes');
             }} 
+          />
+        )}
+
+        {currentView === 'atendimentos' && (
+          <AtendimentoView
+            pacientes={pacientes}
           />
         )}
 
