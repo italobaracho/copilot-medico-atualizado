@@ -24,5 +24,13 @@ dist-ssr
 API/backend/vosk-model-small-pt-0.3/
 API/backend/patients_db.json
 API/backend/users_db.json
-API/backend/__pycache__/
+
+# Python cache/test artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+pytest_tmp/
+patients_db_test.json
+users_db_test.json
 

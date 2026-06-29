@@ -33,7 +33,7 @@ from backend.patient_db import (
     get_all_patients_info, ensure_patient_exists, get_patient_chat_history, 
     add_message_to_history, add_consultation_to_patient, get_patient_consultations, 
     get_consultation_chat_history, add_message_to_consultation_history, add_transcription_log_to_patient,
-    get_patient_transcription_log, delete_patient
+    get_patient_transcription_log, delete_patient, start_recording_for_consultation
     )
 from backend.processador_voz.processador_voz import TranscritorVoz
 from backend.audio_service import Diarizador
@@ -600,6 +600,33 @@ def handle_patient_consultations(patient_id):
             traceback.print_exc()
             return jsonify({"status": "error", "message": f"Erro ao recuperar consultas do paciente: {e}"}), 500
         
+# Endpoint: iniciar gravacao de uma consulta especifica
+@app.route('/api/patients/<patient_id>/consultations/<consultation_id>/recording/start', methods=['POST'])
+@roles_required("administrador", "medico")
+def start_consultation_recording_api(patient_id, consultation_id):
+    """
+    Registra o inicio de uma gravacao para uma consulta ativa.
+    A permissao de microfone e captura do audio acontecem no navegador.
+    """
+    try:
+        result = start_recording_for_consultation(patient_id, consultation_id)
+
+        if result.get("status") == "success":
+            return jsonify(result), 201
+
+        error_status_codes = {
+            "patient_not_found": 404,
+            "consultation_not_found": 404,
+            "recording_already_active": 409,
+            "consultation_inactive": 409
+        }
+        return jsonify(result), error_status_codes.get(result.get("error"), 400)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": f"Erro interno ao iniciar gravacao: {e}"}), 500
+
 # NOVO ENDPOINT: Obter Histórico de uma Consulta Específica
 @app.route('/api/patients/<patient_id>/consultations/<consultation_id>/history', methods=['GET'])
 @roles_required("administrador", "medico")
