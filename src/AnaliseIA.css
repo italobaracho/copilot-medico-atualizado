@@ -1,0 +1,433 @@
+/* --- ESTILOS GERAIS DO CARTÃO E CABEÇALHO --- */
+.container-laudo {
+  max-width: 1000px;
+  margin: 0 auto;
+  font-family: Arial, sans-serif;
+}
+
+.cabecalho-laudo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.cabecalho-laudo h1 {
+  font-size: 24px;
+  margin-bottom: 8px;
+  color: #1a1a1a;
+}
+
+.cabecalho-laudo p {
+  color: #666;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tag-finalizado {
+  background-color: #e6f4ea;
+  color: #1e8e3e;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.botoes-acao {
+  display: flex;
+  gap: 12px;
+}
+
+.botoes-acao button {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  background-color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #0b45d0;
+}
+
+.cartao {
+  background-color: white;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 20px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.titulo-secao {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.numero {
+  background-color: #0b45d0;
+  color: white;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.titulo-secao h2 {
+  font-size: 18px;
+  color: #1a1a1a;
+  font-weight: bold;
+}
+
+/* --- ESTRUTURA INTERNA DO BLOCO 1 --- */
+.conteudo-bloco-1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+/* --- COLUNA ESQUERDA: PACIENTE --- */
+.paciente-info {
+  display: flex;
+  gap: 20px;
+}
+
+.avatar {
+  width: 50px;
+  height: 50px;
+  background-color: #e6f0ff;
+  color: #0b45d0;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.dados-pessoais h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.documentos, .contatos, .endereco {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.contatos {
+  display: flex;
+  gap: 20px;
+}
+
+.separador-ponto {
+  margin: 0 6px;
+  color: #ccc;
+}
+
+/* --- COLUNA DIREITA: DADOS DO LAUDO --- */
+.laudo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 380px;
+}
+
+.linha-info {
+  display: flex;
+  font-size: 13px;
+}
+
+.rotulo {
+  color: #666;
+  width: 140px;
+}
+
+.valor {
+  color: #333;
+}
+
+/* --- BLOCO 2: TABELA DE EXAMES --- */
+.tabela-exames {
+  width: 100%;
+  border-collapse: collapse; /* Remove o espaço duplo entre as bordas da tabela */
+  margin-top: 10px;
+}
+
+/* Cabeçalho da Tabela */
+.tabela-exames th {
+  text-align: left;
+  padding: 12px 8px;
+  color: #666;
+  font-weight: normal;
+  font-size: 13px;
+  border-bottom: 2px solid #eee; /* Linha um pouco mais grossa para separar o cabeçalho */
+}
+
+/* Células normais */
+.tabela-exames td {
+  padding: 12px 8px;
+  color: #333;
+  font-size: 14px;
+  border-bottom: 1px solid #f5f5f5; /* Linha bem clarinha separando cada exame */
+}
+
+/* Linha que dá o nome do grupo de exames */
+.linha-grupo td {
+  font-weight: bold;
+  color: #333;
+  padding-top: 30px; /* Dá um espaço maior em cima para afastar do grupo anterior */
+  padding-bottom: 10px;
+  font-size: 13px;
+  border-bottom: none; /* Tira a linha de baixo para ficar grudado com os exames dele */
+}
+
+/* Cores dos Status */
+.status {
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.status.normal {
+  color: #1e8e3e; /* Verde */
+}
+
+.status.atencao {
+  color: #f29900; /* Amarelo/Laranja */
+}
+
+.status.critico {
+  color: #d93025; /* Vermelho */
+}
+/* --- BLOCO 3: DESCRITIVO DO RESULTADO --- */
+.texto-descritivo p {
+  color: #333; /* Cinza bem escuro, quase preto, para boa leitura */
+  font-size: 14px;
+  line-height: 1.6; /* Aumenta o espaço entre as linhas, deixando a leitura confortável */
+  margin-bottom: 12px; /* Cria um espaço entre um parágrafo e outro */
+}
+
+/* Um truque de CSS: tira a margem extra do último parágrafo 
+   para não deixar um "buraco" vazio no fundo do cartão */
+.texto-descritivo p:last-child {
+  margin-bottom: 0; 
+}
+
+/* --- BLOCO 4: HIPÓTESES IA --- */
+
+/* Tags roxas de cabeçalho */
+.tag-ia {
+  background-color: #f3e8ff;
+  color: #7e22ce;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Colocando os 3 cartões lado a lado */
+.hipoteses-grid {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+/* O cartãozinho individual de cada hipótese */
+.cartao-hipotese {
+  flex: 1; /* Faz com que os três cartões tenham a mesma largura exata */
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.hipotese-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap; /* Se o texto for grande, a tag desce pra linha de baixo */
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.numero-hipotese {
+  width: 20px;
+  height: 20px;
+  border: 1px solid #7e22ce;
+  color: #7e22ce;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.hipotese-cabecalho h3 {
+  font-size: 14px;
+  color: #1a1a1a;
+  flex: 1; /* Ocupa o espaço que sobrar */
+  line-height: 1.3;
+}
+
+.tag-destaque {
+  background-color: #f3e8ff;
+  color: #7e22ce;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.hipotese-texto {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  flex-grow: 1; /* Empurra a barra de probabilidade lá pro fundo do cartão */
+}
+
+/* Barra de Probabilidade */
+.probabilidade {
+  margin-top: auto;
+}
+
+.probabilidade-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.porcentagem {
+  font-weight: bold;
+  color: #333;
+}
+
+.barra-fundo {
+  width: 100%;
+  height: 6px;
+  background-color: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden; /* Garante que a cor de dentro não vaze pelas bordas redondas */
+}
+
+.barra-preenchimento {
+  height: 100%;
+  background-color: #7e22ce;
+  border-radius: 3px;
+  /* A largura (width) está sendo passada direto no HTML usando o atributo style={{width: 'X%'}} */
+}
+
+/* Aviso no rodapé do Bloco 4 */
+.aviso-medico {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #666;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+/* --- BLOCO 5: ORIENTAÇÕES MÉDICAS --- */
+.caixa-orientacoes {
+  background-color: #f8faff; /* Fundo azul bem leve e elegante */
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.lista-orientacoes {
+  list-style: none; /* Remove aquelas bolinhas pretas padrão do HTML */
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Espaço certinho entre cada dica médica */
+}
+
+.lista-orientacoes li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.icone-orientacao {
+  font-size: 18px;
+  margin-top: 2px; /* Garante que o ícone fique na mesma linha da primeira palavra do texto */
+}
+
+.lista-orientacoes p {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* --- RODAPÉ FINAL DAS ASSINATURAS --- */
+.rodape-laudo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 20px 24px 40px;
+  margin-top: 40px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.responsavel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.titulo-responsavel {
+  font-size: 11px;
+  color: #666;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.nome-responsavel {
+  font-size: 14px;
+  color: #333;
+  margin-top: 12px; /* Espaço onde entraria a imagem da assinatura */
+}
+
+.crm {
+  font-size: 12px;
+  color: #666;
+}
+
+.assinatura-digital {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icone-check {
+  color: #1e8e3e;
+  font-size: 18px;
+}
+
+.texto-assinatura {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: #666;
+}
+
+.chave {
+  font-family: monospace; /* Deixa o texto parecendo código de sistema */
+  color: #999;
+  margin-top: 4px;
+}
