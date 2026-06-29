@@ -5,7 +5,7 @@ def test_create_patient_success(client, make_auth_headers, monkeypatch):
     monkeypatch.setattr(
         server,
         "ensure_patient_exists",
-        lambda patient_id, name=None: {"name": name, "chat_history": []},
+        lambda patient_id, name=None, **kwargs: {"name": name, "chat_history": []},
     )
     monkeypatch.setattr(server, "add_consultation_to_patient", lambda patient_id, title: "CONSULTA_ID_001")
 

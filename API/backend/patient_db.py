@@ -194,17 +194,100 @@ def get_patient_consultations(patient_id: str) -> list[dict]:
         return patient_data.get("consultations", [])
     return []
 
+def find_consultation_in_patient(patient_data: dict, consultation_id: str):
+    """
+    Localiza uma consulta dentro dos dados de um paciente.
+    Retorna None se a consulta nao existir.
+    """
+    if not patient_data:
+        return None
+
+    for consultation in patient_data.get("consultations", []):
+        if consultation.get("id") == consultation_id:
+            return consultation
+    return None
+
+def get_patient_consultation(patient_id: str, consultation_id: str):
+    """
+    Recupera uma consulta especifica de um paciente.
+    Retorna None se o paciente ou a consulta nao forem encontrados.
+    """
+    patient_data = get_patient_data(patient_id)
+    return find_consultation_in_patient(patient_data, consultation_id)
+
 def get_consultation_chat_history(patient_id: str, consultation_id: str) -> list[dict]:
     """
     Recupera o histórico de chat de uma consulta específica de um paciente.
     Retorna uma lista vazia se a consulta ou o paciente não forem encontrados.
     """
-    patient_data = get_patient_data(patient_id)
-    if patient_data and "consultations" in patient_data:
-        for consultation in patient_data["consultations"]:
-            if consultation["id"] == consultation_id:
-                return consultation.get("chat_history", [])
+    consultation = get_patient_consultation(patient_id, consultation_id)
+    if consultation:
+        return consultation.get("chat_history", [])
     return []
+
+def start_recording_for_consultation(patient_id: str, consultation_id: str) -> dict:
+    """
+    Inicia o registro de gravacao em uma consulta ativa.
+    A captura do audio fica a cargo do navegador; aqui apenas validamos e
+    registramos o inicio associado ao paciente e atendimento.
+    """
+    db = load_database()
+    patient_data = db.get(patient_id)
+
+    if not patient_data:
+        return {
+            "status": "error",
+            "error": "patient_not_found",
+            "message": "Paciente nao encontrado."
+        }
+
+    consultation = find_consultation_in_patient(patient_data, consultation_id)
+    if not consultation:
+        return {
+            "status": "error",
+            "error": "consultation_not_found",
+            "message": "Consulta nao encontrada."
+        }
+
+    if consultation.get("status", "active") != "active":
+        return {
+            "status": "error",
+            "error": "consultation_inactive",
+            "message": "Atendimento nao esta ativo."
+        }
+
+    recordings = consultation.setdefault("recordings", [])
+    active_recording = next(
+        (recording for recording in recordings if recording.get("status") == "active"),
+        None
+    )
+
+    if active_recording:
+        return {
+            "status": "error",
+            "error": "recording_already_active",
+            "message": "Ja existe uma gravacao ativa neste atendimento.",
+            "recording": active_recording
+        }
+
+    recording = {
+        "id": str(uuid.uuid4()),
+        "patient_id": patient_id,
+        "consultation_id": consultation_id,
+        "status": "active",
+        "started_at": datetime.now().isoformat(),
+        "ended_at": None,
+        "duration_seconds": 0
+    }
+
+    recordings.append(recording)
+    save_database(db)
+
+    return {
+        "status": "success",
+        "message": "Gravacao iniciada com sucesso.",
+        "recording": recording
+    }
 
 def add_message_to_consultation_history(patient_id: str, consultation_id: str, role: str, text: str):
     """
