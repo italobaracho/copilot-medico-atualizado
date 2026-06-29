@@ -12,6 +12,26 @@ export default function Login({ onLoginSuccess }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // --- MODO DE TESTE ATIVADO (Ignorando o backend temporariamente) ---
+  const handleLogin = (e) => {
+    e.preventDefault();
+
+    setLoading(true);
+    setErrorMsg('');
+
+    // Força o login de sucesso imediatamente sem fazer requisição HTTP
+    onLoginSuccess(
+      { id: 1, name: "Médico Teste", email: email }, 
+      "token-fake-de-sessao", 
+      profile
+    );
+
+    setLoading(false);
+  };
+  
+  // Se precisar voltar ao normal depois, basta apagar o bloco acima 
+  // e descomentar o bloco original do fetch que está guardado abaixo.
+  /*
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) {
@@ -45,6 +65,7 @@ export default function Login({ onLoginSuccess }) {
       setLoading(false);
     }
   };
+  */
 
   return (
     <div className="container-principal">
