@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Copilot Médico — Relatório de Entrega</title>
+<style>
+  @page { margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; color: #0f172a; font-size: 12.5px; line-height: 1.55; margin: 0; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 26px 0 8px; color: #0046fe; border-bottom: 2px solid #eff6ff; padding-bottom: 4px; }
+  h3 { font-size: 14px; margin: 16px 0 6px; }
+  p { margin: 6px 0; }
+  .capa { background: linear-gradient(135deg, #0046fe, #0b45d0); color: #fff; padding: 36px 32px; border-radius: 14px; margin-bottom: 18px; }
+  .capa h1 { color: #fff; }
+  .capa p { color: #e0e7ff; margin: 2px 0; }
+  .tag { display: inline-block; background: rgba(255,255,255,.2); padding: 3px 12px; border-radius: 999px; font-size: 11px; margin-top: 10px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+  th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  th { background: #f8fafc; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: #475569; }
+  .ok { color: #16a34a; font-weight: 600; }
+  .warn { color: #d97706; font-weight: 600; }
+  .box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; margin: 10px 0; }
+  .step { background: #eff6ff; border-left: 4px solid #0046fe; padding: 10px 14px; border-radius: 6px; margin: 6px 0; }
+  .num { display: inline-flex; width: 20px; height: 20px; background: #0046fe; color: #fff; border-radius: 50%; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; margin-right: 6px; }
+  code { background: #f1f5f9; padding: 1px 6px; border-radius: 4px; font-size: 11.5px; }
+  ul { margin: 6px 0; padding-left: 20px; }
+  li { margin: 3px 0; }
+  .small { font-size: 11px; color: #64748b; }
+  .pagebreak { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<div class="capa">
+  <h1>Copilot Médico — Relatório de Entrega</h1>
+  <p>Padronização das telas, gravação de voz e Análise com IA (Groq)</p>
+  <p class="small" style="color:#c7d2fe;">Documento para a equipe de tecnologia · Linguagem simplificada</p>
+  <span class="tag">Líder técnico: Ítalo Baracho</span>
+</div>
+
+<h2>1. Resumo (em uma frase)</h2>
+<p>Deixamos o sistema com a <strong>cara das telas de referência</strong>, tornamos a navegação <strong>clicável de verdade</strong>, ligamos a <strong>gravação de voz</strong> a um botão real e criamos a tela <strong>“Análise com IA”</strong> que gera laudos usando o <strong>Groq (Llama 3.3 70B)</strong>.</p>
+
+<h2>2. O que foi entregue</h2>
+<table>
+  <tr><th>Item</th><th>O que mudou</th><th>Status</th></tr>
+  <tr><td>Menu lateral (Sidebar)</td><td>Virou barra larga com nomes e ícones, e botão de recolher.</td><td class="ok">Pronto</td></tr>
+  <tr><td>Topo (TopBar)</td><td>Sino de notificações + usuário logado em todas as telas.</td><td class="ok">Pronto</td></tr>
+  <tr><td>Dashboard</td><td>4 cartões, agenda, atividades, gráfico e insights. <strong>Cartões clicáveis</strong> que levam às telas.</td><td class="ok">Pronto</td></tr>
+  <tr><td>Pacientes</td><td>Virou <strong>tabela</strong> com busca (“Buscar por”) e paginação.</td><td class="ok">Pronto</td></tr>
+  <tr><td>Novo paciente</td><td>Formulário completo (telefone, e-mail, endereço, observações).</td><td class="ok">Pronto</td></tr>
+  <tr><td>Gravação de voz</td><td>Botão de <strong>microfone</strong> no chat do paciente (grava → transcreve).</td><td class="ok">Pronto</td></tr>
+  <tr><td>Análise com IA</td><td>Tela nova que gera <strong>laudo estruturado</strong> com a IA (Groq).</td><td class="ok">Pronto</td></tr>
+  <tr><td>Backend</td><td>Listagem de pacientes passou a enviar CPF e gênero; nova rota <code>/api/analise-ia</code>.</td><td class="ok">Pronto</td></tr>
+</table>
+
+<h2>3. Como usar a GRAVAÇÃO DE VOZ</h2>
+<p>Antes, a gravação existia só “por baixo” (no servidor), sem botão. Agora tem botão na tela.</p>
+<div class="step"><span class="num">1</span> Entrar no sistema → menu <strong>Pacientes</strong>.</div>
+<div class="step"><span class="num">2</span> Clicar no <strong>olho</strong> (👁️) de um paciente para abrir a ficha.</div>
+<div class="step"><span class="num">3</span> Na aba <strong>“Atendimentos e IA Assistente”</strong>, selecionar (ou criar) um atendimento na coluna da esquerda.</div>
+<div class="step"><span class="num">4</span> No chat à direita, na barra de digitar, aparecem 3 botões: 📄 PDF · 🎤 <strong>Microfone</strong> · ➤ Enviar.</div>
+<div class="step"><span class="num">5</span> Clicar no 🎤 (grava) → clicar no ⏹️ (para). A <strong>transcrição cai no campo de mensagem</strong> para o médico revisar.</div>
+<p class="small">O navegador vai pedir permissão de microfone na primeira vez.</p>
+
+<h2>4. Como usar a ANÁLISE COM IA</h2>
+<div class="step"><span class="num">1</span> Menu <strong>Análise com IA</strong>.</div>
+<div class="step"><span class="num">2</span> Escolher um <strong>paciente</strong> e (opcional) um <strong>atendimento</strong>, ou simplesmente <strong>colar os resultados do exame</strong> no campo de texto.</div>
+<div class="step"><span class="num">3</span> Clicar em <strong>“Gerar análise com IA”</strong>.</div>
+<div class="step"><span class="num">4</span> A IA devolve o laudo em 5 blocos: identificação, resultados (com status Normal/Atenção/Crítico), descritivo, hipóteses (com %) e orientações. Dá para <strong>Imprimir / salvar em PDF</strong>.</div>
+<div class="box"><strong>Como funciona por dentro:</strong> a tela envia o texto para a rota <code>/api/analise-ia</code>, que monta um prompt e chama o <strong>Groq (Llama 3.3 70B)</strong> pedindo a resposta em formato estruturado (JSON). O resultado é desenhado na tela.</div>
+
+<h2 class="pagebreak">5. O que é preciso para tudo funcionar</h2>
+<table>
+  <tr><th>Recurso</th><th>Situação</th><th>Ação</th></tr>
+  <tr><td>Chave do Groq (IA)</td><td class="ok">Já configurada no <code>.env</code> (<code>GROQ_API_KEY</code>)</td><td>Nada — já funciona.</td></tr>
+  <tr><td>Internet no servidor</td><td class="warn">Necessária</td><td>O Groq e a transcrição do Google são online.</td></tr>
+  <tr><td>Modelo de voz Vosk</td><td class="warn">Não embarcado no container</td><td>Para diarização (Médico/Paciente), baixar o modelo para <code>API/backend/vosk-model-small-pt-0.3/</code>. Sem ele, usa o fallback online do Google.</td></tr>
+  <tr><td>Docker</td><td class="ok">Sobe com 1 comando</td><td><code>docker compose up -d --build</code> → acessar <code>localhost:5173</code>.</td></tr>
+</table>
+<p class="small">Login de teste: <code>doctor@example.com</code> / <code>StrongPass123!</code> (perfil Médico).</p>
+
+<h2>6. Fluxo de Git (dev → homolog → main)</h2>
+<p>Todo trabalho sai de uma branch <code>feature/...</code>, vai para <strong>dev</strong> (integração), depois <strong>homolog</strong> (validação) e por fim <strong>main</strong> (produção, protegida — só o líder técnico mescla).</p>
+<div class="box"><strong>⚠️ Pendência:</strong> a branch <code>feature/backend-start-recording</code> (gravação, backend) <strong>ainda não está em dev/homolog</strong>. Precisa de um PR para a <code>dev</code> para não se perder.</div>
+
+<h2>7. Pontos de melhoria (gargalos) — do mais fácil ao estratégico</h2>
+<ul>
+  <li><strong>Dados do Dashboard são de demonstração (mock):</strong> agenda, atividades e gráfico ainda são fixos. Já estão marcados no código com <code>// TODO BACKEND</code> para ligar quando houver os endpoints.</li>
+  <li><strong>Estilos “inline”:</strong> dificultam a responsividade no celular. Recomenda-se migrar para CSS Modules ou Tailwind (começando pelas telas novas).</li>
+  <li><strong>Arquivo <code>PacienteView.jsx</code> muito grande:</strong> quebrar em partes menores (lista, detalhe, chat, exames).</li>
+  <li><strong>Mensagens com <code>alert()</code>:</strong> trocar por avisos (toasts) mais elegantes.</li>
+  <li><strong>Sem testes no frontend:</strong> adicionar testes nos componentes novos.</li>
+  <li><strong>Segredos no <code>docker-compose.yml</code>:</strong> mover senhas/chaves para <code>.env</code>.</li>
+</ul>
+
+<h2>8. Próximos passos sugeridos para a equipe</h2>
+<ul>
+  <li>Abrir o PR de <code>feature/backend-start-recording</code> → <code>dev</code>.</li>
+  <li>Criar os endpoints reais do Dashboard para tirar os dados de demonstração.</li>
+  <li>Mostrar o áudio/transcrição também dentro do card de Atendimento (como na referência).</li>
+  <li>Proteger a branch <code>main</code> no GitHub (Settings → Branches).</li>
+</ul>
+
+<p class="small" style="margin-top:24px;">Gerado automaticamente como parte da entrega. Detalhes técnicos completos em <code>docs/PLANO_IMPLEMENTACAO_TELAS.md</code>.</p>
+
+</body>
+</html>

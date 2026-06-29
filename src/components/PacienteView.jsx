@@ -901,7 +901,7 @@ export default function PacientesView({ pacientes, onDeletePaciente, token, mode
               </div>
             ) : (
               <div style={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#64748b', fontSize: '14px', textAlign: 'center', padding: '40px', border: '1px dashed #cbd5e1', borderRadius: '12px' }}>
-                Selecione um atendimento na lista à esquerda para carregar o histórico de conversa e interagir com o Assistente de IA.
+                Selecione um atendimento na lista à esquerda para carregar o histórico, conversar com o Assistente de IA e usar o 🎤 microfone para gravar e transcrever a consulta.
               </div>
             )}
           </div>

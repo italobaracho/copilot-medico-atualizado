@@ -686,6 +686,63 @@ def handle_recommendations():
 
 
 
+@app.route('/api/analise-ia', methods=['POST'])
+@roles_required("administrador", "medico")
+def handle_analise_ia():
+    """
+    Gera um LAUDO estruturado com IA (Groq) a partir do histórico de um
+    atendimento e/ou de resultados de exame colados manualmente.
+    Usado pela tela "Análise com IA".
+    """
+    try:
+        data = request.get_json() or {}
+        patient_id = data.get('patient_id')
+        consultation_id = data.get('consultation_id')
+        exam_text = (data.get('exam_text') or '').strip()
+
+        partes_contexto = []
+
+        # Dados do paciente (bloco de identificação)
+        paciente = get_patient_data(patient_id) if patient_id else None
+
+        # Histórico do atendimento (transcrições de voz, PDFs e chat) vira contexto
+        if patient_id and consultation_id:
+            historico = get_consultation_chat_history(patient_id, consultation_id) or []
+            for msg in historico:
+                partes = msg.get('parts') or []
+                texto = partes[0].get('text', '') if partes else ''
+                if texto:
+                    partes_contexto.append(texto)
+
+        if exam_text:
+            partes_contexto.append(f"Resultados de exame informados manualmente:\n{exam_text}")
+
+        contexto = "\n\n".join(partes_contexto).strip()
+        if not contexto:
+            return jsonify({
+                "status": "error",
+                "message": "Sem dados para analisar. Cole os resultados do exame ou selecione um atendimento que já tenha histórico/transcrição."
+            }), 400
+
+        analise = gemini_connection.gerar_analise_laboratorial(contexto)
+
+        identificacao = None
+        if paciente:
+            identificacao = {
+                "nome": paciente.get("name", "Paciente"),
+                "cpf": paciente.get("cpf", "Não informado"),
+                "idade": paciente.get("age", "Não informado"),
+                "sexo": paciente.get("gender", "Não informado"),
+            }
+
+        return jsonify({"status": "success", "analise": analise, "identificacao": identificacao}), 200
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": f"Erro ao gerar análise: {e}"}), 500
+
+
 if __name__ == '__main__':
     print("Servidor Flask com Gemini e DB de Paciente iniciado.")
     

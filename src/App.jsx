@@ -5,6 +5,7 @@ import PacienteView from './components/PacienteView';
 import CadastroView from './components/CadastroView';
 import Login from './components/Login';
 import HomeView from './components/HomeView';
+import AnaliseIAView from './components/AnaliseIAView';
 import { API_URL } from './api';
 import theme from './theme';
 
@@ -13,7 +14,6 @@ import theme from './theme';
 // implementada pelo time conforme o plano de implementação).
 const PLACEHOLDER_TITLES = {
   'agendamentos': 'Agendamentos',
-  'analise-ia': 'Análise com IA',
   'atendimentos': 'Atendimentos',
   'prontuarios': 'Prontuários',
   'relatorios': 'Relatórios',
@@ -173,6 +173,10 @@ function App() {
 
         {currentView === 'home' && (
           <HomeView user={user} onViewChange={changeView} />
+        )}
+
+        {currentView === 'analise-ia' && (
+          <AnaliseIAView pacientes={pacientes} token={token} />
         )}
 
         {(currentView === 'pacientes' || currentView === 'search') && (
