@@ -6,6 +6,8 @@ import CadastroView from './components/CadastroView';
 import Login from './components/Login';
 import HomeView from './components/HomeView';
 import AnaliseIAView from './components/AnaliseIAView';
+import AtendimentosView from './components/AtendimentosView';
+import AgendamentosView from './components/AgendamentosView';
 import { API_URL } from './api';
 import theme from './theme';
 
@@ -13,8 +15,6 @@ import theme from './theme';
 // Mostram um placeholder amigável (a tela "Análise com IA" será
 // implementada pelo time conforme o plano de implementação).
 const PLACEHOLDER_TITLES = {
-  'agendamentos': 'Agendamentos',
-  'atendimentos': 'Atendimentos',
   'prontuarios': 'Prontuários',
   'relatorios': 'Relatórios',
   'configuracoes': 'Configurações',
@@ -177,6 +177,18 @@ function App() {
 
         {currentView === 'analise-ia' && (
           <AnaliseIAView pacientes={pacientes} token={token} />
+        )}
+
+        {currentView === 'atendimentos' && (
+          <AtendimentosView
+            pacientes={pacientes}
+            token={token}
+            onAddNewPatient={() => setCurrentView('cadastro')}
+          />
+        )}
+
+        {currentView === 'agendamentos' && (
+          <AgendamentosView />
         )}
 
         {(currentView === 'pacientes' || currentView === 'search') && (

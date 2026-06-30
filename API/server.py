@@ -743,6 +743,43 @@ def handle_analise_ia():
         return jsonify({"status": "error", "message": f"Erro ao gerar análise: {e}"}), 500
 
 
+@app.route('/api/patients/<patient_id>/atendimento-transcricao', methods=['POST'])
+@roles_required("administrador", "medico")
+def salvar_atendimento_transcricao(patient_id):
+    """
+    Salva no prontuário um atendimento transcrito em tempo real (tela Atendimentos):
+    cria uma nova consulta, registra o log de transcrição e adiciona o texto ao
+    histórico da consulta (para a IA usar como contexto).
+    """
+    try:
+        data = request.get_json() or {}
+        text = (data.get('text') or '').strip()
+        title = data.get('title') or f"Atendimento em {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+        try:
+            duration = float(data.get('duration') or 0)
+        except (TypeError, ValueError):
+            duration = 0.0
+
+        if not text:
+            return jsonify({"status": "error", "message": "Transcrição vazia."}), 400
+        if not get_patient_data(patient_id):
+            return jsonify({"status": "error", "message": "Paciente não encontrado."}), 404
+
+        consultation_id = add_consultation_to_patient(patient_id, title)
+        if not consultation_id:
+            return jsonify({"status": "error", "message": "Falha ao criar atendimento."}), 500
+
+        add_transcription_log_to_patient(patient_id, consultation_id, text, duration if duration > 0 else 1.0)
+        add_message_to_consultation_history(patient_id, consultation_id, "user", f"Transcrição do atendimento: {text}")
+
+        return jsonify({"status": "success", "consultation_id": consultation_id, "title": title}), 201
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": f"Erro ao salvar atendimento: {e}"}), 500
+
+
 if __name__ == '__main__':
     print("Servidor Flask com Gemini e DB de Paciente iniciado.")
     

@@ -52,7 +52,9 @@
   <tr><td>Novo paciente</td><td>Formulário completo (telefone, e-mail, endereço, observações).</td><td class="ok">Pronto</td></tr>
   <tr><td>Gravação de voz</td><td>Botão de <strong>microfone</strong> no chat do paciente (grava → transcreve).</td><td class="ok">Pronto</td></tr>
   <tr><td>Análise com IA</td><td>Tela nova que gera <strong>laudo estruturado</strong> com a IA (Groq).</td><td class="ok">Pronto</td></tr>
-  <tr><td>Backend</td><td>Listagem de pacientes passou a enviar CPF e gênero; nova rota <code>/api/analise-ia</code>.</td><td class="ok">Pronto</td></tr>
+  <tr><td>Atendimentos</td><td>Tela com <strong>gravação + transcrição em tempo real</strong> e análise com IA.</td><td class="ok">Pronto</td></tr>
+  <tr><td>Agendamentos</td><td>Calendário <strong>semanal/dia/mês</strong> interativo, com novo agendamento.</td><td class="ok">Pronto</td></tr>
+  <tr><td>Backend</td><td>CPF/gênero na listagem; rotas <code>/api/analise-ia</code> e <code>/api/.../atendimento-transcricao</code>.</td><td class="ok">Pronto</td></tr>
 </table>
 
 <h2>3. Como usar a GRAVAÇÃO DE VOZ</h2>
@@ -70,6 +72,18 @@
 <div class="step"><span class="num">3</span> Clicar em <strong>“Gerar análise com IA”</strong>.</div>
 <div class="step"><span class="num">4</span> A IA devolve o laudo em 5 blocos: identificação, resultados (com status Normal/Atenção/Crítico), descritivo, hipóteses (com %) e orientações. Dá para <strong>Imprimir / salvar em PDF</strong>.</div>
 <div class="box"><strong>Como funciona por dentro:</strong> a tela envia o texto para a rota <code>/api/analise-ia</code>, que monta um prompt e chama o <strong>Groq (Llama 3.3 70B)</strong> pedindo a resposta em formato estruturado (JSON). O resultado é desenhado na tela.</div>
+
+<h2>4b. Telas Atendimentos e Agendamentos (novas)</h2>
+<h3>Atendimentos (gravação em tempo real)</h3>
+<div class="step"><span class="num">1</span> Menu <strong>Atendimentos</strong> → selecionar o paciente.</div>
+<div class="step"><span class="num">2</span> Clicar em <strong>“Iniciar gravação”</strong> → confirmar no aviso.</div>
+<div class="step"><span class="num">3</span> Falar: a <strong>transcrição aparece ao vivo</strong> com a contagem de tempo. Clicar em <strong>“Finalizar gravação”</strong>.</div>
+<div class="step"><span class="num">4</span> Usar <strong>“Analisar com IA”</strong> (gera o laudo) e/ou <strong>“Salvar no prontuário”</strong> (grava o atendimento no paciente).</div>
+<div class="box"><strong>Como funciona:</strong> a transcrição ao vivo usa a <em>Web Speech API</em> do navegador (Chrome/Edge) — funciona sem servidor. Ao salvar, o texto vai para o backend (cria a consulta e registra a transcrição).</div>
+
+<h3>Agendamentos (agenda)</h3>
+<p>Calendário com visões <strong>Dia / Semana / Mês</strong>, navegação (Hoje, ‹ ›) e botão <strong>“Novo agendamento”</strong> que adiciona um horário à agenda. Os tipos têm cores: Consulta (verde), Retorno (azul), Intervalo (cinza).</p>
+<p class="small"><strong>Observação:</strong> hoje os agendamentos ficam na memória da sessão (somem ao recarregar). Para salvar de verdade, o time precisa criar os endpoints <code>/api/agendamentos</code> no backend — está anotado no código.</p>
 
 <h2 class="pagebreak">5. O que é preciso para tudo funcionar</h2>
 <table>
