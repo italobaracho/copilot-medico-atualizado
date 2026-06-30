@@ -1,129 +1,139 @@
-import { 
-  Search, Home, User2, FileText, Activity, 
-  BarChart2, Users, Code, Lock, HelpCircle, LogOut 
+import {
+  LayoutDashboard, Users, Calendar, Sparkles, ClipboardList,
+  FolderClosed, BarChart3, Settings, ChevronLeft, ChevronRight, LogOut
 } from 'lucide-react';
+import theme from '../theme';
+import logoCopilot from '../assets/logo_copilot_med.png';
 
-function Sidebar({ currentView, onViewChange, onLogout }) {
-  // Lista de itens do menu central
-  const menuItems = [
-    { id: 'search', icon: Search, label: 'Buscar' },
-    { id: 'home', icon: Home, label: 'Início' },
-    { id: 'pacientes', icon: User2, label: 'Pacientes' }, // Este está ativo na imagem
-    { id: 'atendimentos', icon: FileText, label: 'Atendimentos' },
-    { id: 'clinica', icon: Activity, label: 'Clínica' },
-    { id: 'metricas', icon: BarChart2, label: 'Métricas' },
-    { id: 'equipe', icon: Users, label: 'Equipe' },
-    { id: 'api', icon: Code, label: 'API' },
-    { id: 'seguranca', icon: Lock, label: 'Segurança' },
-  ];
+// Itens do menu, na mesma ordem das telas de referência (imagens 2-11)
+const menuItems = [
+  { id: 'home',         icon: LayoutDashboard, label: 'Dashboard' },
+  { id: 'pacientes',    icon: Users,           label: 'Pacientes' },
+  { id: 'agendamentos', icon: Calendar,        label: 'Agendamentos' },
+  { id: 'analise-ia',   icon: Sparkles,        label: 'Análise com IA' },
+  { id: 'atendimentos', icon: ClipboardList,   label: 'Atendimentos' },
+  { id: 'prontuarios',  icon: FolderClosed,    label: 'Prontuários' },
+  { id: 'relatorios',   icon: BarChart3,       label: 'Relatórios' },
+  { id: 'configuracoes', icon: Settings,       label: 'Configurações' },
+];
+
+function Sidebar({ currentView, onViewChange, onLogout, collapsed, onToggleCollapse }) {
+  const width = collapsed ? theme.layout.sidebarCollapsed : theme.layout.sidebarWidth;
 
   return (
-    <aside style={styles.sidebar}>
-      {/* Bloco Superior: Logo */}
-      <div style={styles.logoContainer}>
-        <button 
-          onClick={() => onViewChange('cadastro')} // O clique avisa o App.jsx para mudar de tela
-          style={{ ...styles.navButton, ...styles.logoCircle }} // Reaproveita os estilos visuais da bolinha azul
-          title="Cadastrar Novo Paciente"
-        >
-          <span style={styles.logoPlus}>+</span>
-        </button>
+    <aside style={{ ...styles.sidebar, width }}>
+      {/* Logo / Marca */}
+      <div style={{ ...styles.logoRow, justifyContent: collapsed ? 'center' : 'flex-start' }}>
+        <img src={logoCopilot} alt="Copilot Médico" style={styles.logoImg} />
+        {!collapsed && (
+          <span style={styles.logoText}>Copilot Médico</span>
+        )}
       </div>
 
-      {/* Bloco Central: Navegação */}
-      <nav style={styles.navMenu}>
+      {/* Navegação */}
+      <nav style={styles.nav}>
         {menuItems.map((item) => {
-  const Icon = item.icon;
-  const isActive = currentView === item.id;
-  
-  return (
-    <button
-      key={item.id}
-      onClick={() => onViewChange(item.id)}
-      style={{
-        ...styles.navButton,
-        // Se estiver ativo, aplica o fundo azul claro. Se não, fica transparente.
-        backgroundColor: isActive ? '#eff6ff' : 'transparent', 
-      }}
-      title={item.label}
-    >
-      {/* O ícone fica azul se ativo, ou cinza escuro/azulado se inativo */}
-      <Icon size={22} color={isActive ? '#0046fe' : '#475569'} />
-    </button>
-  );
-})}
+          const Icon = item.icon;
+          const isActive = currentView === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => onViewChange(item.id)}
+              title={collapsed ? item.label : undefined}
+              style={{
+                ...styles.navButton,
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                backgroundColor: isActive ? theme.colors.primarySoft : 'transparent',
+                color: isActive ? theme.colors.primary : '#475569',
+                fontWeight: isActive ? 600 : 500,
+              }}
+            >
+              <Icon size={20} color={isActive ? theme.colors.primary : '#475569'} />
+              {!collapsed && <span>{item.label}</span>}
+            </button>
+          );
+        })}
       </nav>
 
-      {/* Bloco Inferior: Suporte e Sair */}
-      <div style={styles.footerMenu}>
-        <button style={styles.navButton} title="Ajuda">
-          <HelpCircle size={22} color="#64748b" />
+      {/* Rodapé: Recolher + Sair */}
+      <div style={styles.footer}>
+        <button
+          onClick={onLogout}
+          title="Sair"
+          style={{ ...styles.navButton, justifyContent: collapsed ? 'center' : 'flex-start', color: '#475569' }}
+        >
+          <LogOut size={20} color="#475569" />
+          {!collapsed && <span>Sair</span>}
         </button>
-        <button style={styles.navButton} onClick={onLogout} title="Sair">
-          <LogOut size={22} color="#64748b" />
+
+        <button
+          onClick={onToggleCollapse}
+          style={{ ...styles.collapseBtn, justifyContent: collapsed ? 'center' : 'flex-start' }}
+          title={collapsed ? 'Expandir menu' : 'Recolher menu'}
+        >
+          {collapsed ? <ChevronRight size={18} color="#64748b" /> : <ChevronLeft size={18} color="#64748b" />}
+          {!collapsed && <span>Recolher menu</span>}
         </button>
       </div>
     </aside>
   );
 }
 
-// Estilos rápidos para alinhar com o design da imagem
 const styles = {
   sidebar: {
-    width: '80px',
     height: '100vh',
-    backgroundColor: '#ffffff',
-    borderRight: '1px solid #e2e8f0',
+    backgroundColor: theme.colors.surface,
+    borderRight: `1px solid ${theme.colors.border}`,
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'between',
-    padding: '24px 0',
+    padding: '20px 12px',
     position: 'fixed',
     left: 0,
     top: 0,
+    transition: 'width 0.2s ease',
+    zIndex: 20,
+    fontFamily: 'system-ui, -apple-system, sans-serif',
   },
-  logoContainer: {
-    display: 'flex',
-    justifyContent: 'center',
-    marginBottom: '32px',
-  },
-  logoCircle: {
-    width: '40px',
-    height: '40px',
-    backgroundColor: '#0046fe',
-    borderRadius: '12px',
+  logoRow: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: '10px',
+    padding: '4px 8px',
+    marginBottom: '28px',
+    minHeight: '40px',
   },
-  logoPlus: {
-    color: '#ffffff',
-    fontSize: '24px',
-    fontWeight: 'bold',
-  },
-  navMenu: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '20px',
-    flexGrow: 1,
-  },
-  footerMenu: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '20px',
-  },
+  logoImg: { width: '34px', height: '34px', borderRadius: '8px', objectFit: 'contain' },
+  logoText: { fontSize: '17px', fontWeight: 700, color: theme.colors.text, whiteSpace: 'nowrap' },
+  nav: { display: 'flex', flexDirection: 'column', gap: '4px', flexGrow: 1 },
   navButton: {
-    background: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    width: '100%',
     border: 'none',
-    padding: '10px',
-    borderRadius: '12px',
+    background: 'none',
+    padding: '11px 12px',
+    borderRadius: theme.radius.md,
     cursor: 'pointer',
-    transition: 'all 0.2s',
+    fontSize: '14px',
+    whiteSpace: 'nowrap',
+    transition: 'background 0.15s',
+    textAlign: 'left',
   },
-  activeButton: {
-    backgroundColor: '#eff6ff', // Azul bem claro de fundo
+  footer: { display: 'flex', flexDirection: 'column', gap: '4px', borderTop: `1px solid ${theme.colors.border}`, paddingTop: '12px' },
+  collapseBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    width: '100%',
+    border: 'none',
+    background: 'none',
+    padding: '11px 12px',
+    borderRadius: theme.radius.md,
+    cursor: 'pointer',
+    fontSize: '13px',
+    color: '#64748b',
+    whiteSpace: 'nowrap',
   },
 };
 

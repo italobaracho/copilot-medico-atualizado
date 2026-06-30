@@ -4,6 +4,7 @@ import PacienteView from './components/PacienteView';
 import CadastroView from './components/CadastroView';
 import Login from './components/Login';
 import HomeView from './components/HomeView';
+import NovoAtendimentoView from './components/NovoAtendimentoView';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
@@ -19,7 +20,10 @@ function App() {
 
   const [currentView, setCurrentView] = useState('home');
   const [activePatientId, setActivePatientId] = useState(null);
-  const [pacientes, setPacientes] = useState([]);
+  const [pacientes, setPacientes] = useState([
+    { id: '1', nome: 'Maria Silva', cpf: '123.456.789-00', idade: '32 anos', sexo: 'F' },
+  { id: '2', nome: 'João Santos', cpf: '987.654.321-00', idade: '45 anos', sexo: 'M' },
+  ]);
   const [loading, setLoading] = useState(false);
 
   const handleSelectPatientFromHome = (patientId) => {
@@ -136,22 +140,26 @@ function App() {
   // Se não estiver autenticado, exibe a tela de login
   if (!token) {
     return <Login onLoginSuccess={handleLoginSuccess} />;
-  }
+    }
 
+    const [menuCollapsed, setMenuCollapsed] = useState(false);
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
-      <Sidebar 
-        currentView={currentView} 
-        onViewChange={(view) => {
-          if (view !== 'pacientes') {
-            setActivePatientId(null);
-          }
-          setCurrentView(view);
-        }} 
-        onLogout={handleLogout}
-      />
+    <Sidebar 
+  currentView={currentView} 
+  onViewChange={setCurrentView} 
+  onLogout={handleLogout}
+  // Adicione estas duas linhas abaixo:
+  collapsed={menuCollapsed}
+  onToggleCollapse={() => setMenuCollapsed(!menuCollapsed)}
+/>
 
-      <main style={{ marginLeft: '80px', flexGrow: 1, padding: '40px' }}>
+     <main style={{ 
+  marginLeft: menuCollapsed ? '80px' : '220px', 
+  flexGrow: 1, 
+  padding: '40px',
+  transition: 'margin-left 0.2s ease'
+}}>
         {currentView === 'home' && (
           <HomeView 
             pacientes={pacientes}
@@ -187,8 +195,18 @@ function App() {
             }} 
           />
         )}
+        
+        {currentView === 'atendimentos' && (
+          <NovoAtendimentoView 
+          patientId={activePatientId} 
+          pacientes={pacientes}                              
+          token={token}       
+          onVoltar={() => setCurrentView('pacientes')} 
+          onAddNewPatient={() => setCurrentView('cadastro')}
+          />
+        )}
 
-        {currentView !== 'home' && currentView !== 'pacientes' && currentView !== 'search' && currentView !== 'cadastro' && (
+        {currentView !== 'home' && currentView !== 'pacientes' && currentView !== 'search' && currentView !== 'cadastro' && currentView !== 'atendimentos' && (
           <div style={{ fontFamily: 'sans-serif', padding: '20px' }}>
             <h1 style={{ color: '#1e3a8a', marginBottom: '10px' }}>{currentView.toUpperCase()}</h1>
             <p style={{ color: '#64748b' }}>Esta tela está em desenvolvimento ou serve como demonstração.</p>
@@ -197,6 +215,7 @@ function App() {
       </main>
     </div>
   );
+
 }
 
 export default App;
