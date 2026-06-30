@@ -29,6 +29,21 @@ body {
 @keyframes spin { to { transform: rotate(360deg); } }
 .animate-spin { animation: spin 1s linear infinite; }
 
+/* Pulso do indicador de "Gravando..." (tela Atendimentos) */
+@keyframes recPulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+.rec-pulse { animation: recPulse 1s ease-in-out infinite; }
+
+/* Barras da waveform da gravação */
+@keyframes wf { 0%,100% { height: 6px; } 50% { height: 28px; } }
+.wf-bar {
+  display: inline-block;
+  width: 3px;
+  height: 6px;
+  background: #0046fe;
+  border-radius: 2px;
+  animation: wf 0.9s ease-in-out infinite;
+}
+
 /* Barra de rolagem mais discreta */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
