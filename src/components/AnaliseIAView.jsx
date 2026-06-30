@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
-  Sparkles, Loader2, Printer, FlaskConical, FileText,
-  CheckCircle2, AlertTriangle, XCircle, Stethoscope
+  Sparkles, Loader2, Printer, FlaskConical,
+  CheckCircle2, AlertTriangle, XCircle, Stethoscope, FileUp
 } from 'lucide-react';
 import theme from '../theme';
 import { API_URL } from '../api';
@@ -29,6 +29,7 @@ export default function AnaliseIAView({ pacientes, token }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [extractingPdf, setExtractingPdf] = useState(false);
 
   // Carrega os atendimentos do paciente escolhido
   useEffect(() => {
@@ -49,6 +50,33 @@ export default function AnaliseIAView({ pacientes, token }) {
       }
     })();
   }, [patientId, token]);
+
+  const handleUploadPdf = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setExtractingPdf(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('pdf', file);
+      const r = await fetch(`${API_URL}/api/extract-pdf`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await r.json();
+      if (r.ok && data.status === 'success') {
+        setExamText((prev) => prev ? `${prev}\n\n${data.text}` : data.text);
+      } else {
+        setError(data.message || 'Erro ao extrair texto do PDF.');
+      }
+    } catch {
+      setError('Erro de conexão ao processar o PDF.');
+    } finally {
+      setExtractingPdf(false);
+      e.target.value = '';
+    }
+  };
 
   const gerarAnalise = async () => {
     setError('');
@@ -113,7 +141,24 @@ export default function AnaliseIAView({ pacientes, token }) {
         </div>
 
         <div style={styles.field}>
-          <label style={styles.label}>Ou cole os resultados do exame (opcional)</label>
+          <label style={styles.label}>Ou cole / faça upload dos resultados do exame (opcional)</label>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
+            <label style={styles.uploadLabel}>
+              {extractingPdf
+                ? <><Loader2 size={14} className="animate-spin" /> Extraindo PDF...</>
+                : <><FileUp size={14} /> Anexar PDF de exame</>}
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={handleUploadPdf}
+                disabled={extractingPdf}
+                style={{ display: 'none' }}
+              />
+            </label>
+            <span style={{ fontSize: '12px', color: theme.colors.textMuted }}>
+              O texto será extraído automaticamente e preenchido abaixo
+            </span>
+          </div>
           <textarea
             style={styles.textarea}
             placeholder="Ex.: Hemoglobina 13,2 g/dL; Leucócitos 12.800/mm³; PCR 8,6 mg/L..."
@@ -300,6 +345,7 @@ const styles = {
   textarea: { padding: '11px 12px', borderRadius: theme.radius.sm, border: '1px solid #cbd5e1', fontSize: '14px', minHeight: '90px', resize: 'vertical', fontFamily: 'inherit', color: theme.colors.text },
   errorBox: { color: theme.colors.danger, backgroundColor: theme.colors.dangerSoft, padding: '10px 14px', borderRadius: theme.radius.sm, fontSize: '13px', fontWeight: 500 },
   generateBtn: { alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: theme.colors.primary, color: '#fff', border: 'none', borderRadius: theme.radius.sm, padding: '12px 22px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' },
+  uploadLabel: { display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: '#fff', color: '#475569', border: `1px solid ${theme.colors.border}`, borderRadius: theme.radius.sm, padding: '8px 14px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' },
 
   report: { ...card, padding: '0', overflow: 'hidden' },
   reportHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '22px 24px', borderBottom: `1px solid ${theme.colors.border}`, flexWrap: 'wrap', gap: '12px' },

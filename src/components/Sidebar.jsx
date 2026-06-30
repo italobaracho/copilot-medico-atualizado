@@ -1,20 +1,19 @@
 import {
   LayoutDashboard, Users, Calendar, Sparkles, ClipboardList,
-  FolderClosed, BarChart3, Settings, ChevronLeft, ChevronRight, LogOut
+  BarChart3, Settings, ChevronLeft, ChevronRight, LogOut
 } from 'lucide-react';
 import theme from '../theme';
 import logoCopilot from '../assets/logo_copilot_med.png';
 
 // Itens do menu, na mesma ordem das telas de referência (imagens 2-11)
 const menuItems = [
-  { id: 'home',         icon: LayoutDashboard, label: 'Dashboard' },
-  { id: 'pacientes',    icon: Users,           label: 'Pacientes' },
-  { id: 'agendamentos', icon: Calendar,        label: 'Agendamentos' },
-  { id: 'analise-ia',   icon: Sparkles,        label: 'Análise com IA' },
-  { id: 'atendimentos', icon: ClipboardList,   label: 'Atendimentos' },
-  { id: 'prontuarios',  icon: FolderClosed,    label: 'Prontuários' },
-  { id: 'relatorios',   icon: BarChart3,       label: 'Relatórios' },
-  { id: 'configuracoes', icon: Settings,       label: 'Configurações' },
+  { id: 'home',          icon: LayoutDashboard, label: 'Dashboard' },
+  { id: 'pacientes',     icon: Users,           label: 'Pacientes' },
+  { id: 'agendamentos',  icon: Calendar,        label: 'Agendamentos' },
+  { id: 'analise-ia',    icon: Sparkles,        label: 'Análise com IA' },
+  { id: 'atendimentos',  icon: ClipboardList,   label: 'Atendimentos' },
+  { id: 'relatorios',    icon: BarChart3,       label: 'Relatórios' },
+  { id: 'configuracoes', icon: Settings,        label: 'Configurações' },
 ];
 
 function Sidebar({ currentView, onViewChange, onLogout, collapsed, onToggleCollapse }) {

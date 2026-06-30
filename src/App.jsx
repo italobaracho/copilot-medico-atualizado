@@ -15,7 +15,6 @@ import theme from './theme';
 // Mostram um placeholder amigável (a tela "Análise com IA" será
 // implementada pelo time conforme o plano de implementação).
 const PLACEHOLDER_TITLES = {
-  'prontuarios': 'Prontuários',
   'relatorios': 'Relatórios',
   'configuracoes': 'Configurações',
 };

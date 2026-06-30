@@ -189,7 +189,6 @@ export default function AtendimentosView({ pacientes, token, onAddNewPatient }) 
       </p>
 
       <div style={styles.layout}>
-        {/* Coluna principal */}
         <div style={styles.main}>
           {/* 1. Selecionar paciente */}
           <div style={styles.card}>
@@ -298,23 +297,17 @@ export default function AtendimentosView({ pacientes, token, onAddNewPatient }) 
           </div>
         </div>
 
-        {/* Coluna lateral (status) */}
-        <div style={styles.side}>
-          <div style={styles.sideCard}>
-            <div style={styles.sideIcon}><Mic size={18} color={theme.colors.primary} /></div>
-            <strong style={{ fontSize: '14px' }}>Gravação de áudio</strong>
-            <p style={styles.muted}>
-              {recording ? 'Gravando o atendimento em tempo real.' : 'A gravação será iniciada após sua confirmação.'}
-            </p>
-          </div>
-          {!SpeechRecognition && (
-            <div style={{ ...styles.sideCard, borderColor: theme.colors.warning }}>
-              <AlertTriangle size={18} color={theme.colors.warning} />
-              <p style={styles.muted}>Transcrição em tempo real disponível no Chrome ou Edge.</p>
-            </div>
-          )}
-        </div>
       </div>
+
+      {!SpeechRecognition && (
+        <div style={{ ...styles.lgpd, borderColor: theme.colors.warning, marginTop: '12px' }}>
+          <AlertTriangle size={20} color={theme.colors.warning} />
+          <div>
+            <strong>Navegador incompatível</strong>
+            <p style={styles.muted}>Transcrição em tempo real disponível no Chrome ou Edge.</p>
+          </div>
+        </div>
+      )}
 
       {/* Modal de confirmação */}
       {confirming && (
@@ -409,9 +402,8 @@ const styles = {
   title: { fontSize: '28px', fontWeight: 800, color: theme.colors.text, margin: 0 },
   subtitle: { color: theme.colors.textMuted, fontSize: '14px', margin: '6px 0 0 0' },
   breadcrumb: { fontSize: '13px', color: theme.colors.textMuted, margin: '18px 0' },
-  layout: { display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' },
-  main: { flex: '1 1 640px', display: 'flex', flexDirection: 'column', gap: '20px', minWidth: '320px' },
-  side: { width: '260px', display: 'flex', flexDirection: 'column', gap: '16px' },
+  layout: { display: 'flex', flexDirection: 'column', gap: '20px' },
+  main: { display: 'flex', flexDirection: 'column', gap: '20px' },
 
   card,
   cardTitle: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: 700, color: theme.colors.text, margin: '0 0 16px 0' },

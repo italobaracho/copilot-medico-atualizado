@@ -729,26 +729,46 @@ export default function PacientesView({ pacientes, onDeletePaciente, token, mode
             <div style={styles.cardsList}>
               {selectedPatient.atendimentos.map(atend => {
                 const isSelected = selectedConsultation?.id === atend.id;
+                let dateObj = null;
+                try { dateObj = new Date(atend.date); } catch { /* noop */ }
+                const dayNum  = dateObj && !isNaN(dateObj) ? dateObj.getDate() : '—';
+                const monthStr = dateObj && !isNaN(dateObj)
+                  ? dateObj.toLocaleString('pt-BR', { month: 'short' }).toUpperCase().replace('.', '')
+                  : '—';
+                const yearNum  = dateObj && !isNaN(dateObj) ? dateObj.getFullYear() : '';
                 return (
-                  <div 
-                    key={atend.id} 
+                  <div
+                    key={atend.id}
                     style={{
-                      ...styles.itemCard, 
+                      ...styles.itemCard,
                       ...styles.clickableCard,
                       borderLeft: isSelected ? '4px solid #0046fe' : '1px solid #f1f5f9',
-                      backgroundColor: isSelected ? '#f8fafc' : '#ffffff'
+                      backgroundColor: isSelected ? '#f8fafc' : '#ffffff',
+                      flexDirection: 'column',
+                      alignItems: 'stretch',
+                      gap: '8px',
                     }}
                     onClick={() => handleSelectConsultationForChat(atend)}
                   >
-                    <div style={styles.dateBlock}>
-                      <span style={styles.dateDay}>{new Date(atend.date).getDate()}</span>
-                      <span style={styles.dateMonth}>{new Date(atend.date).toLocaleString('pt-BR', { month: 'short' }).toUpperCase()}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0' }}>
+                      <div style={styles.dateBlock}>
+                        <span style={styles.dateDay}>{dayNum}</span>
+                        <span style={styles.dateMonth}>{monthStr}</span>
+                        {yearNum && <span style={styles.dateYear}>{yearNum}</span>}
+                      </div>
+                      <div style={{ flexGrow: 1, marginLeft: '16px' }}>
+                        <h4 style={styles.itemCardTitle}>{atend.title}</h4>
+                        <p style={styles.itemCardSub}>Consulta médica</p>
+                      </div>
+                      <ChevronRight size={18} color="#94a3b8" />
                     </div>
-                    <div style={{ flexGrow: 1, marginLeft: '16px' }}>
-                      <h4 style={styles.itemCardTitle}>{atend.title}</h4>
-                      <p style={styles.itemCardSub}>ID: {atend.id.substring(0, 8)}...</p>
-                    </div>
-                    <ChevronRight size={18} color="#94a3b8" />
+                    {atend.has_transcription && (
+                      <div style={styles.audioBadge}>
+                        <Mic size={11} color="#0046fe" />
+                        <span>Transcrição de áudio disponível</span>
+                        <Download size={11} color="#64748b" />
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -915,32 +935,45 @@ export default function PacientesView({ pacientes, onDeletePaciente, token, mode
                 <FlaskConical size={18} color="#0046fe" />
                 <h3 style={styles.columnTitle}>Exames Clínicos</h3>
               </div>
-              <button style={styles.actionBtn}>Novo exame</button>
+              <div style={styles.columnTitleRow}>
+                <span style={{ fontSize: '12px', color: theme.colors.textMuted }}>PDFs anexados aparecem aqui automaticamente</span>
+              </div>
             </div>
 
             <div style={styles.cardsList}>
-              {selectedPatient.exames.map(exame => (
-                <div 
-                  key={exame.id} 
-                  style={{...styles.itemCard, ...styles.clickableCard}} 
-                  onClick={() => setViewedExam(exame)}
-                >
-                  <div style={styles.dateBlock}>
-                    <span style={styles.dateDay}>{exame.data.split(' ')[0]}</span>
-                    <span style={styles.dateMonth}>{exame.data.split(' ')[1]}</span>
+              {selectedPatient.exames.map(exame => {
+                const partes = (exame.data || '').split(' ');
+                const dia = partes[0] || '—';
+                const mes = partes[1] || '—';
+                return (
+                  <div
+                    key={exame.id}
+                    style={{...styles.itemCard, ...styles.clickableCard}}
+                    onClick={() => setViewedExam(exame)}
+                  >
+                    <div style={styles.dateBlock}>
+                      <span style={styles.dateDay}>{dia}</span>
+                      <span style={styles.dateMonth}>{mes}</span>
+                      {exame.ano && <span style={styles.dateYear}>{exame.ano}</span>}
+                    </div>
+                    <div style={{ flexGrow: 1, marginLeft: '16px' }}>
+                      <h4 style={styles.itemCardTitle}>{exame.nome}</h4>
+                      <p style={styles.itemCardSub}>{exame.categoria}</p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      {exame.horario && <span style={{ fontSize: '13px', color: '#64748b' }}>{exame.horario}</span>}
+                      <span style={styles.statusTag}>{exame.status || 'Concluído'}</span>
+                      <Download size={16} color="#64748b" />
+                    </div>
                   </div>
-                  <div style={{ flexGrow: 1, marginLeft: '16px' }}>
-                    <h4 style={styles.itemCardTitle}>{exame.nome}</h4>
-                    <p style={styles.itemCardSub}>{exame.categoria}</p>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={styles.statusTag}>{exame.status}</span>
-                    <Download size={16} color="#64748b" />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {selectedPatient.exames.length === 0 && (
-                <p style={{color: '#64748b', textAlign: 'center', padding: '20px'}}>Nenhum exame cadastrado no prontuário.</p>
+                <div style={{ textAlign: 'center', padding: '32px 20px' }}>
+                  <FlaskConical size={32} color="#cbd5e1" style={{ marginBottom: '8px' }} />
+                  <p style={{color: '#64748b', margin: 0}}>Nenhum exame cadastrado.</p>
+                  <p style={{color: '#94a3b8', fontSize: '12px', margin: '4px 0 0 0'}}>Envie um PDF de exame no chat do paciente e ele aparecerá aqui.</p>
+                </div>
               )}
             </div>
           </div>
@@ -950,15 +983,23 @@ export default function PacientesView({ pacientes, onDeletePaciente, token, mode
       {/* Modal Lateral / Detalhes do Exame quando clicado */}
       {viewedExam && (
         <div style={styles.modalOverlay} onClick={() => setViewedExam(null)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div style={{ ...styles.modalContent, maxWidth: '560px', maxHeight: '80vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <div style={styles.modalHeader}>
               <h3 style={styles.modalTitle}>{viewedExam.nome}</h3>
               <button style={styles.closeModalBtn} onClick={() => setViewedExam(null)}>✕</button>
             </div>
-            <p style={{color: '#64748b', fontSize: '14px', marginBottom: '16px'}}>{viewedExam.categoria} • {viewedExam.data} às {viewedExam.horario}</p>
+            <p style={{color: '#64748b', fontSize: '13px', marginBottom: '16px'}}>
+              {viewedExam.categoria}
+              {viewedExam.data && ` • ${viewedExam.data}${viewedExam.ano ? ` ${viewedExam.ano}` : ''}`}
+              {viewedExam.horario && ` às ${viewedExam.horario}`}
+            </p>
             <div style={styles.resultBox}>
-              <h5 style={{margin: '0 0 8px 0', color: '#1e293b'}}>Resultado do Laudo:</h5>
-              <p style={{margin: 0, color: '#334155', lineHeight: '1.5', fontSize: '14px'}}>{viewedExam.resultado}</p>
+              <h5 style={{margin: '0 0 8px 0', color: '#1e293b'}}>
+                {viewedExam.categoria === 'Exame PDF' ? 'Texto extraído do PDF:' : 'Resultado do Laudo:'}
+              </h5>
+              <p style={{margin: 0, color: '#334155', lineHeight: '1.6', fontSize: '13px', whiteSpace: 'pre-wrap'}}>
+                {viewedExam.resultado || 'Resultado não disponível.'}
+              </p>
             </div>
           </div>
         </div>
@@ -1030,6 +1071,8 @@ const styles = {
   dateBlock: { display: 'flex', flexDirection: 'column', alignItems: 'center', borderRight: '1px solid #e2e8f0', paddingRight: '16px', minWidth: '45px' },
   dateDay: { fontSize: '18px', fontWeight: 'bold', color: '#0f172a' },
   dateMonth: { fontSize: '10px', color: '#64748b', fontWeight: '600' },
+  dateYear: { fontSize: '10px', color: '#94a3b8', fontWeight: '500' },
+  audioBadge: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#0046fe', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '4px 10px', marginLeft: '61px' },
   itemCardTitle: { margin: '0 0 4px 0', fontSize: '14px', fontWeight: 'bold' },
   itemCardSub: { margin: '0', fontSize: '12px', color: '#64748b' },
   statusTag: { backgroundColor: '#ecfdf5', color: '#059669', padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '600' },

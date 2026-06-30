@@ -32,11 +32,11 @@ from backend.agendamentos_db import (
     get_all_agendamentos, create_agendamento, update_agendamento, delete_agendamento
 )
 from backend.patient_db import (
-    load_database, save_database, generate_patient_id, get_patient_data, 
-    get_all_patients_info, ensure_patient_exists, get_patient_chat_history, 
-    add_message_to_history, add_consultation_to_patient, get_patient_consultations, 
+    load_database, save_database, generate_patient_id, get_patient_data,
+    get_all_patients_info, ensure_patient_exists, get_patient_chat_history,
+    add_message_to_history, add_consultation_to_patient, get_patient_consultations,
     get_consultation_chat_history, add_message_to_consultation_history, add_transcription_log_to_patient,
-    get_patient_transcription_log, delete_patient
+    get_patient_transcription_log, delete_patient, add_exam_to_patient
     )
 from backend.processador_voz.processador_voz import TranscritorVoz
 from backend.audio_service import Diarizador
@@ -374,6 +374,13 @@ def get_patient_details(patient_id):
     try:
         patient_data = get_patient_data(patient_id)
         if patient_data:
+            # Marca quais consultas possuem transcrição de áudio
+            logs = get_patient_transcription_log(patient_id)
+            ids_com_transcricao = {log.get('consultation_id') for log in logs}
+            consultations = patient_data.get("consultations", [])
+            for c in consultations:
+                c['has_transcription'] = c['id'] in ids_com_transcricao
+
             return jsonify({
                 "status": "success",
                 "patient": {
@@ -382,7 +389,7 @@ def get_patient_details(patient_id):
                     "cpf": patient_data.get("cpf", "000.000.000-00"),
                     "idade": patient_data.get("age", "Não informado"),
                     "sexo": patient_data.get("gender", "Não informado"),
-                    "atendimentos": patient_data.get("consultations", []),
+                    "atendimentos": consultations,
                     "exames": patient_data.get("exames", [])
                 }
             }), 200
@@ -508,15 +515,24 @@ def upload_pdf():
             return jsonify({"status": "error", "message": "Texto extraído está vazio."}), 400
 
         filtered_extracted_text = text_filter.remover_nomes(extracted_text)
-        
+
+        # Registra o PDF na aba Exames do paciente
+        pdf_name = file.filename or 'Laudo PDF'
+        add_exam_to_patient(
+            patient_id,
+            name=pdf_name,
+            category='Exame PDF',
+            extracted_text=extracted_text,
+            filename=pdf_name,
+        )
+
         context_message_for_pdf = f"O seguinte texto foi extraído de um PDF enviado pelo usuário: \"{filtered_extracted_text}\". Por favor, analise-o e responda às perguntas subsequentes ou forneça um resumo, conforme apropriado."
-        
+
         # Adiciona a mensagem ao histórico da consulta
         add_message_to_consultation_history(patient_id, consultation_id, "user", context_message_for_pdf)
-        
-        # A assinatura correta é send_message(patient_id: str, consultation_id: str, message_text: str)
+
         ai_response_text = gemini_connection.send_message(patient_id, consultation_id, context_message_for_pdf)
-        
+
         # Adiciona a resposta da IA ao histórico da consulta
         add_message_to_consultation_history(patient_id, consultation_id, "model", ai_response_text)
 
@@ -529,7 +545,7 @@ def upload_pdf():
         }
         if new_patient_id_generated:
             response_data["patient_id"] = new_patient_id_generated
-            
+
         return jsonify(response_data), 200
 
     except Exception as e:
@@ -781,6 +797,25 @@ def salvar_atendimento_transcricao(patient_id):
         import traceback
         traceback.print_exc()
         return jsonify({"status": "error", "message": f"Erro ao salvar atendimento: {e}"}), 500
+
+
+@app.route('/api/extract-pdf', methods=['POST'])
+@roles_required("administrador", "medico")
+def extract_pdf_text():
+    """
+    Extrai o texto de um PDF enviado via multipart/form-data.
+    Usado pela tela "Análise com IA" para preencher o campo de texto do exame.
+    """
+    if 'pdf' not in request.files:
+        return jsonify({"status": "error", "message": "Nenhum arquivo PDF enviado."}), 400
+    file = request.files['pdf']
+    try:
+        extracted_text = pdf_reader.extract_text_from_pdf(file)
+        if not extracted_text.strip():
+            return jsonify({"status": "error", "message": "Não foi possível extrair texto do PDF."}), 400
+        return jsonify({"status": "success", "text": extracted_text, "filename": file.filename or ""}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Erro ao processar PDF: {e}"}), 500
 
 
 @app.route('/api/agendamentos', methods=['GET'])

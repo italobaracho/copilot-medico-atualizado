@@ -279,4 +279,38 @@ def get_patient_transcription_log(patient_id: str) -> list[dict]:
     patient_data = get_patient_data(patient_id)
     if patient_data:
         return patient_data.get("transcription_logs", [])
-    return []
+    return []
+
+
+def add_exam_to_patient(patient_id: str, name: str, category: str = 'Exame PDF',
+                        extracted_text: str = '', filename: str = '') -> dict | None:
+    """
+    Registra um exame/laudo (PDF ou manual) no prontuário do paciente.
+    Retorna o objeto do exame criado, ou None se o paciente não existir.
+    """
+    db = load_database()
+    patient_data = db.get(patient_id)
+    if not patient_data:
+        return None
+
+    if 'exames' not in patient_data:
+        patient_data['exames'] = []
+
+    months = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN',
+              'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ']
+    now = datetime.now()
+    exam = {
+        'id': str(uuid.uuid4()),
+        'nome': name,
+        'categoria': category,
+        'data': f"{now.day:02d} {months[now.month - 1]}",
+        'ano': str(now.year),
+        'horario': now.strftime('%H:%M'),
+        'status': 'Concluído',
+        'resultado': extracted_text[:3000],
+        'filename': filename,
+    }
+    patient_data['exames'].append(exam)
+    db[patient_id] = patient_data
+    save_database(db)
+    return exam
