@@ -28,6 +28,9 @@ from backend.auth_service import (
 from backend.config import settings
 
 # Importa TODAS as funções do seu patient_db.py
+from backend.agendamentos_db import (
+    get_all_agendamentos, create_agendamento, update_agendamento, delete_agendamento
+)
 from backend.patient_db import (
     load_database, save_database, generate_patient_id, get_patient_data, 
     get_all_patients_info, ensure_patient_exists, get_patient_chat_history, 
@@ -778,6 +781,64 @@ def salvar_atendimento_transcricao(patient_id):
         import traceback
         traceback.print_exc()
         return jsonify({"status": "error", "message": f"Erro ao salvar atendimento: {e}"}), 500
+
+
+@app.route('/api/agendamentos', methods=['GET'])
+@roles_required("administrador", "medico", "recepcao")
+def listar_agendamentos():
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    try:
+        appts = get_all_agendamentos(date_from=date_from, date_to=date_to)
+        return jsonify({"status": "success", "agendamentos": appts}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route('/api/agendamentos', methods=['POST'])
+@roles_required("administrador", "medico", "recepcao")
+def criar_agendamento():
+    data = request.get_json() or {}
+    date = data.get('date')
+    start = data.get('start')
+    end = data.get('end')
+    title = data.get('title', '').strip()
+    type_ = data.get('type', 'Consulta')
+    patient_id = data.get('patient_id')
+
+    if not date or not start or not end or not title:
+        return jsonify({"status": "error", "message": "date, start, end e title são obrigatórios."}), 400
+
+    try:
+        appt = create_agendamento(date, start, end, title, type_, patient_id)
+        return jsonify({"status": "success", "agendamento": appt}), 201
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route('/api/agendamentos/<appt_id>', methods=['PATCH'])
+@roles_required("administrador", "medico", "recepcao")
+def atualizar_agendamento(appt_id):
+    data = request.get_json() or {}
+    try:
+        appt = update_agendamento(appt_id, **{k: v for k, v in data.items() if k != 'id'})
+        if appt is None:
+            return jsonify({"status": "error", "message": "Agendamento não encontrado."}), 404
+        return jsonify({"status": "success", "agendamento": appt}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route('/api/agendamentos/<appt_id>', methods=['DELETE'])
+@roles_required("administrador", "medico", "recepcao")
+def excluir_agendamento(appt_id):
+    try:
+        ok = delete_agendamento(appt_id)
+        if not ok:
+            return jsonify({"status": "error", "message": "Agendamento não encontrado."}), 404
+        return jsonify({"status": "success", "message": "Agendamento removido."}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 if __name__ == '__main__':

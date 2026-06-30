@@ -35,7 +35,6 @@ function App() {
   const [currentView, setCurrentView] = useState('home');
   const [activePatientId, setActivePatientId] = useState(null);
   const [pacientes, setPacientes] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
   const changeView = (view) => {
@@ -64,7 +63,6 @@ function App() {
 
   const fetchPacientes = useCallback(async () => {
     if (!token) return;
-    setLoading(true);
     try {
       const response = await fetch(`${API_URL}/api/all-patients`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -86,8 +84,6 @@ function App() {
       }
     } catch (err) {
       console.error('Erro ao buscar pacientes:', err);
-    } finally {
-      setLoading(false);
     }
   }, [token]);
 
@@ -188,7 +184,7 @@ function App() {
         )}
 
         {currentView === 'agendamentos' && (
-          <AgendamentosView />
+          <AgendamentosView token={token} />
         )}
 
         {(currentView === 'pacientes' || currentView === 'search') && (
