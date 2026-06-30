@@ -39,7 +39,7 @@ sequenceDiagram
 
 ---
 
-#### 🟢 Tarefa B1 (Dev 1 - Backend)
+#### 🟢 Tarefa B1 (Dev 1 - Backend) - Leticia
 *   **Título**: `Backend: Criar Bot do Telegram e Recebimento de Áudio`
 *   **Objetivo**: Criar o serviço do bot no Telegram que recebe mensagens de voz e faz o download delas.
 *   **O que fazer (Passo a Passo)**:
