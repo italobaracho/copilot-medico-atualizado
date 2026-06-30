@@ -1,14 +1,12 @@
-import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Settings, X, Calendar as CalIcon } from 'lucide-react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, Plus, Settings, X, Calendar as CalIcon, Loader2, Trash2 } from 'lucide-react';
 import theme from '../theme';
+import { API_URL } from '../api';
 
 // ============================================================
-// Tela AGENDAMENTOS (imagem 2) — calendário semanal interativo
+// Tela AGENDAMENTOS — calendário semanal interativo com backend
 // ------------------------------------------------------------
-// Navegação por semana/dia/mês, blocos posicionados pelo horário,
-// e "Novo agendamento" que adiciona de verdade (estado em memória).
-// OBS PARA O TIME: a persistência é em memória (some ao recarregar).
-// Para salvar de verdade, criar endpoints /api/agendamentos no backend.
+// Persistência real via GET/POST/DELETE /api/agendamentos (SQLite).
 // ============================================================
 
 const HOUR_START = 7;
@@ -23,7 +21,6 @@ const TYPE_STYLE = {
   'Intervalo': { color: '#64748b', bg: '#f1f5f9', bar: '#94a3b8' },
 };
 
-const NOMES = ['João Silva', 'Ana Clara', 'Gabriel Dias', 'Simone Oliveira', 'Renato Cardoso', 'Maria Souza', 'Roberto Martins', 'Patrícia Mendes', 'Eduardo Lima', 'Tatiana Silva', 'Carlos Lima', 'Beatriz Oliveira', 'Ricardo Nunes', 'Aline Costa', 'Paulo Henrique', 'Lucas Pereira', 'Mariana Rocha', 'Felipe Carvalho', 'Clara Bezerra', 'Rafael Gomes'];
 
 const toKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
@@ -31,32 +28,36 @@ const startOfWeek = (d) => { const x = new Date(d); const dow = (x.getDay() + 6)
 const toDecimal = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h + m / 60; };
 const isSameDay = (a, b) => toKey(a) === toKey(b);
 
-// Gera agendamentos de exemplo para a semana exibida (seg-sex)
-function seedWeek(monday) {
-  const appts = [];
-  let n = 0;
-  for (let dia = 0; dia < 5; dia++) {
-    const date = toKey(addDays(monday, dia));
-    const horarios = [['08:00', '08:45'], ['09:00', '09:45'], ['10:00', '10:45'], ['14:00', '14:45'], ['15:00', '15:45'], ['16:00', '16:45']];
-    horarios.forEach(([start, end], i) => {
-      const tipo = i % 2 === 0 ? 'Consulta' : 'Retorno';
-      appts.push({ id: `${date}-${start}`, date, start, end, title: NOMES[n % NOMES.length], type: tipo });
-      n++;
-    });
-    appts.push({ id: `${date}-12`, date, start: '11:00', end: '11:45', title: 'Intervalo', type: 'Intervalo' });
-  }
-  return appts;
-}
 
-export default function AgendamentosView() {
+export default function AgendamentosView({ token }) {
   const [view, setView] = useState('Semana');
   const [ref, setRef] = useState(new Date());
-  const [appts, setAppts] = useState(() => seedWeek(startOfWeek(new Date())));
+  const [appts, setAppts] = useState([]);
+  const [loadingAppts, setLoadingAppts] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({ date: toKey(new Date()), start: '08:00', end: '08:45', title: '', type: 'Consulta' });
 
   const monday = useMemo(() => startOfWeek(ref), [ref]);
   const today = new Date();
+
+  const fetchAppts = useCallback(async () => {
+    if (!token) return;
+    setLoadingAppts(true);
+    try {
+      const r = await fetch(`${API_URL}/api/agendamentos`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await r.json();
+      if (r.ok && data.status === 'success') setAppts(data.agendamentos || []);
+    } catch (e) {
+      console.error('Erro ao carregar agendamentos:', e);
+    } finally {
+      setLoadingAppts(false);
+    }
+  }, [token]);
+
+  useEffect(() => { fetchAppts(); }, [fetchAppts]);
 
   const days = view === 'Dia' ? [ref] : Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   const hours = Array.from({ length: HOUR_END - HOUR_START + 1 }, (_, i) => HOUR_START + i);
@@ -80,11 +81,41 @@ export default function AgendamentosView() {
     else setRef((d) => addDays(d, dir * 7));
   };
 
-  const salvarAgendamento = () => {
-    if (!form.title.trim()) { alert('Informe o nome do paciente.'); return; }
-    setAppts((prev) => [...prev, { ...form, id: `${form.date}-${form.start}-${Date.now()}` }]);
-    setModal(false);
-    setForm({ date: toKey(ref), start: '08:00', end: '08:45', title: '', type: 'Consulta' });
+  const salvarAgendamento = async () => {
+    if (!form.title.trim()) { alert('Informe o nome do paciente ou descrição.'); return; }
+    setSaving(true);
+    try {
+      const r = await fetch(`${API_URL}/api/agendamentos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(form),
+      });
+      const data = await r.json();
+      if (r.ok && data.status === 'success') {
+        setAppts((prev) => [...prev, data.agendamento]);
+        setModal(false);
+        setForm({ date: toKey(ref), start: '08:00', end: '08:45', title: '', type: 'Consulta' });
+      } else {
+        alert(data.message || 'Erro ao salvar agendamento.');
+      }
+    } catch (e) {
+      alert('Erro de conexão ao salvar agendamento.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const excluirAgendamento = async (id) => {
+    if (!window.confirm('Remover este agendamento?')) return;
+    try {
+      const r = await fetch(`${API_URL}/api/agendamentos/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (r.ok) setAppts((prev) => prev.filter((a) => a.id !== id));
+    } catch (e) {
+      alert('Erro ao remover agendamento.');
+    }
   };
 
   return (
@@ -99,6 +130,12 @@ export default function AgendamentosView() {
         </button>
       </div>
       <p style={styles.breadcrumb}><span style={{ color: theme.colors.primary, fontWeight: 600 }}>Home</span> &gt; Agendamentos</p>
+
+      {loadingAppts && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: theme.colors.textMuted, fontSize: '14px', marginBottom: '12px' }}>
+          <Loader2 size={16} className="animate-spin" /> Carregando agendamentos...
+        </div>
+      )}
 
       <div style={styles.card}>
         {/* Toolbar */}
@@ -154,6 +191,12 @@ export default function AgendamentosView() {
                           <span style={{ ...styles.apptTime, color: st.color }}>{a.start} – {a.end}</span>
                           <span style={styles.apptTitle}>{a.title}</span>
                           <span style={styles.apptType}>{a.type}</span>
+                          {h > 40 && (
+                            <button onClick={(e) => { e.stopPropagation(); excluirAgendamento(a.id); }}
+                              style={styles.deleteBtn} title="Remover agendamento">
+                              <Trash2 size={10} />
+                            </button>
+                          )}
                         </div>
                       );
                     })}
@@ -196,7 +239,9 @@ export default function AgendamentosView() {
             </Field>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
               <button style={styles.outlineBtn} onClick={() => setModal(false)}>Cancelar</button>
-              <button style={styles.primaryBtn} onClick={salvarAgendamento}>Salvar</button>
+              <button style={styles.primaryBtn} onClick={salvarAgendamento} disabled={saving}>
+                {saving ? <><Loader2 size={14} className="animate-spin" /> Salvando...</> : 'Salvar'}
+              </button>
             </div>
           </div>
         </div>
@@ -270,7 +315,8 @@ const styles = {
   timeCell: { height: `${ROW_H}px`, fontSize: '11px', color: theme.colors.textSoft, textAlign: 'right', paddingRight: '8px', transform: 'translateY(-6px)' },
   dayCol: { position: 'relative', borderLeft: `1px solid ${theme.colors.border}` },
   slot: { height: `${ROW_H}px`, borderBottom: `1px solid #f1f5f9` },
-  appt: { position: 'absolute', left: '3px', right: '3px', borderRadius: '6px', padding: '4px 6px', overflow: 'hidden', display: 'flex', flexDirection: 'column', cursor: 'pointer' },
+  appt: { position: 'absolute', left: '3px', right: '3px', borderRadius: '6px', padding: '4px 6px', overflow: 'hidden', display: 'flex', flexDirection: 'column', cursor: 'pointer', userSelect: 'none' },
+  deleteBtn: { position: 'absolute', top: '3px', right: '3px', background: 'rgba(0,0,0,0.12)', border: 'none', borderRadius: '4px', padding: '2px 3px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#475569' },
   apptTime: { fontSize: '10px', fontWeight: 700 },
   apptTitle: { fontSize: '12px', fontWeight: 600, color: theme.colors.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   apptType: { fontSize: '10px', color: theme.colors.textMuted },
